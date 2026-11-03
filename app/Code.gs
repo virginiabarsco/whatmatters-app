@@ -10,7 +10,7 @@ var COLS = 10; // Posición, Alcance de entrada, Nombre, Correo, Convocó, Estad
 var HEAD = ['Posición', 'Alcance de entrada', 'Nombre', 'Correo', 'Convocó (posición)', 'Estado', 'Fecha de convocatoria', 'Fecha de entrada', 'Lo que importa', 'Árbol'];
 var FORMATS = [['@', '0', '@', '@', '@', '@', 'dd/mm/yyyy', 'dd/mm/yyyy', '@', '@']];
 var ACOLS = 13;
-var AHEAD = ['Árbol', 'Nombre', 'Tipo', 'Lugar (si es geográfico)', 'Estado', 'Plantó (correo)', 'Fecha', 'Propuesta: nombre', 'Propuesta: tipo', 'Propuesta: lugar', 'Propuso (posición)', 'De acuerdo (posiciones)', 'Fecha del acuerdo'];
+var AHEAD = ['Árbol', 'Tema', 'Tipo', 'Lugar (si es geográfico)', 'Estado', 'Plantó (correo)', 'Fecha', 'Propuesta: tema', 'Propuesta: tipo', 'Propuesta: lugar', 'Propuso (posición)', 'De acuerdo (posiciones)', 'Fecha del acuerdo'];
 var TIPOS = ['Temático', 'Geográfico'];
 var SHEET_SUM = 'Quieren sumarse';
 var QCOLS = 12;
@@ -97,10 +97,10 @@ function ensureSetup_() {
   props.setProperty('setup_tema_v1', 'ok');
   props.setProperty('setup_arboles_v1', 'ok');
 }
-function cleanTema_(t) { return clean_(t, 120); }
-function needNombreTema_(nombre, tema) {
+function cleanLoQueImporta_(t) { return clean_(t, 120); }
+function needNombreLoQueImporta_(nombre, loQueImporta) {
   if (!nombre) fail_('Falta tu nombre.');
-  if (!tema) fail_('Falta al menos una palabra en Lo que importa.');
+  if (!loQueImporta) fail_('Falta al menos una palabra en Lo que importa.');
 }
 
 // ---------- lectura ----------
@@ -110,7 +110,7 @@ function readAll_() {
   if (n < 1) return [];
   return s.getRange(2, 1, n, COLS).getValues().map(function (r, i) {
     return { row: i + 2, pos: String(r[0]), alcance: Number(r[1]) || depth_(r[0]), nombre: clean_(r[2], 60), correo: normMail_(r[3]),
-      invito: String(r[4] || ''), estado: legado_(clean_(r[5])) || 'Convocada', fInv: fmtDate_(r[6]), fEnt: fmtDate_(r[7]), tema: cleanTema_(r[8]),
+      invito: String(r[4] || ''), estado: legado_(clean_(r[5])) || 'Convocada', fInv: fmtDate_(r[6]), fEnt: fmtDate_(r[7]), loQueImporta: cleanLoQueImporta_(r[8]),
       arbol: String(r[9] || 't1'), ent: Object.prototype.toString.call(r[7]) === '[object Date]' ? r[7].getTime() : 0 };
   }).filter(function (p) { return p.pos && p.pos !== 'undefined'; });
 }
@@ -122,8 +122,8 @@ function readTrees_() {
   var n = a.getLastRow() - 1;
   if (n < 1) return [];
   return a.getRange(2, 1, n, ACOLS).getValues().map(function (r, i) {
-    var prop = r[7] ? { nombre: clean_(r[7], 60), tipo: clean_(r[8], 20), desc: clean_(r[9], 240), de: String(r[10] || '') } : null;
-    return { row: i + 2, id: String(r[0]), nombre: clean_(r[1], 60), tipo: clean_(r[2], 20), desc: clean_(r[3], 240),
+    var prop = r[7] ? { tema: clean_(r[7], 60), tipo: clean_(r[8], 20), desc: clean_(r[9], 240), de: String(r[10] || '') } : null;
+    return { row: i + 2, id: String(r[0]), tema: clean_(r[1], 60), tipo: clean_(r[2], 20), desc: clean_(r[3], 240),
       acordado: clean_(r[4]) === 'Tema acordado', planto: normMail_(r[5]), fecha: fmtDate_(r[6]), prop: prop,
       acuerdos: String(r[11] || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean) };
   }).filter(function (t) { return t.id; });
@@ -144,9 +144,9 @@ function nextTreeId_(trees) {
   trees.forEach(function (t) { var m = /^t(\d+)$/.exec(t.id); if (m) max = Math.max(max, Number(m[1])); });
   return 't' + (max + 1);
 }
-// Cómo se llama un árbol: su nombre acordado o, mientras no hay tema, la semilla con los nombres de quienes ya están en ella.
+// Cómo se muestra un árbol: su tema acordado o, mientras no hay tema, la semilla con los nombres de quienes ya están en ella.
 function treeLabel_(tree, people) {
-  if (tree && tree.acordado && tree.nombre) return tree.nombre;
+  if (tree && tree.acordado && tree.tema) return tree.tema;
   var names = SEMILLA.map(function (pos) { return people.filter(function (p) { return p.pos === pos && p.estado === 'Activa'; })[0]; })
     .filter(Boolean).map(function (p) { return String(p.nombre || '').split(' ')[0]; }).filter(Boolean);
   if (!names.length) return 'Semilla nueva';
@@ -201,7 +201,7 @@ function trianglesOf_(person, map) {
 function treeSummary_(tree, people) {
   var act = people.filter(function (p) { return p.estado === 'Activa'; });
   var hasta2 = act.filter(function (p) { return p.alcance <= 2; }).length;
-  return { id: tree.id, nombre: treeLabel_(tree, people), acordado: tree.acordado, tipo: tree.acordado ? tree.tipo : '',
+  return { id: tree.id, titulo: treeLabel_(tree, people), acordado: tree.acordado, tipo: tree.acordado ? tree.tipo : '',
     personas: act.length, esArbol: hasta2 >= 9, falta: !tree.acordado && !!tree.prop, desc: tree.acordado ? tree.desc : '' };
 }
 
@@ -211,7 +211,7 @@ function buildState_(correo, arbolPedido) {
   var mias = correo ? rowsOf_(all, correo) : [];
   var activas = mias.filter(function (p) { return p.estado === 'Activa'; });
   var admin = !!(correo && activas.length && isAdminMail_(correo));
-  var yo = activas.length ? { correo: correo, nombre: activas[0].nombre, tema: activas[0].tema, admin: admin } : null;
+  var yo = activas.length ? { correo: correo, nombre: activas[0].nombre, loQueImporta: activas[0].loQueImporta, admin: admin } : null;
   // Qué árbol se muestra: el pedido, si existe; si no, el primero de la persona; si no, el más antiguo.
   var pick = treeById_(trees, arbolPedido);
   if (!pick && mias.length) pick = treeById_(trees, mias[0].arbol);
@@ -220,7 +220,7 @@ function buildState_(correo, arbolPedido) {
   var map = index_(people);
   var cerrado = !(pick && pick.acordado);
   var mine = yo ? people.filter(function (p) { return p.correo === correo; })[0] : null;
-  var me = mine ? { pos: mine.pos, nombre: mine.nombre, correo: mine.correo, estado: mine.estado, tema: mine.tema, admin: admin } : null;
+  var me = mine ? { pos: mine.pos, nombre: mine.nombre, correo: mine.correo, estado: mine.estado, loQueImporta: mine.loQueImporta, admin: admin } : null;
   function lugar(slot, owner, base) {
     var o = occupant_(map, slot);
     var l = { pos: slot, pid: o ? o.pos : '', nombre: o ? o.nombre : '', estado: o ? o.estado : 'Por convocar', yo: !!(me && o && o.pos === me.pos) };
@@ -252,12 +252,12 @@ function buildState_(correo, arbolPedido) {
   // Orden de entrada de las personas activas: el cliente lo usa para dar a cada una un color propio que no cambia.
   var orden = people.filter(function (p) { return p.estado === 'Activa'; })
     .sort(function (a, b) { return (a.ent - b.ent) || (a.row - b.row); }).map(function (p) { return p.pos; });
-  var temas = {}; people.forEach(function (p) { if (p.estado === 'Activa' && p.tema) temas[p.pos] = p.tema; });
+  var loQueImporta = {}; people.forEach(function (p) { if (p.estado === 'Activa' && p.loQueImporta) loQueImporta[p.pos] = p.loQueImporta; });
 
   var arbol = null;
   if (pick) {
     var semilla = SEMILLA.map(function (pos) { var p = map[pos]; return { pos: pos, nombre: p && p.estado === 'Activa' ? p.nombre : '', activa: !!(p && p.estado === 'Activa'), acuerda: pick.acuerdos.indexOf(pos) >= 0 }; });
-    arbol = { id: pick.id, nombre: treeLabel_(pick, people), acordado: pick.acordado, tipo: pick.tipo, desc: pick.desc,
+    arbol = { id: pick.id, titulo: treeLabel_(pick, people), acordado: pick.acordado, tipo: pick.tipo, desc: pick.desc,
       prop: pick.acordado ? null : pick.prop, semilla: semilla,
       soySemilla: !!(me && me.estado === 'Activa' && SEMILLA.indexOf(me.pos) >= 0) };
     if (arbol.prop) { var de = map[arbol.prop.de]; arbol.prop.deNombre = de ? de.nombre : ''; }
@@ -281,7 +281,7 @@ function buildState_(correo, arbolPedido) {
     var vig = readPedidos_().filter(function (q) { return q.arbol === pick.id && pedidoVigente_(q); });
     pedidos = vig.filter(function (q) { return q.estado === 'Pendiente' || q.estado === 'Asignada'; }).map(function (q) {
       var asig = q.asignado ? map[q.asignado] : null;
-      return { id: q.id, nombre: q.nombre, tema: q.tema, mensaje: q.mensaje, fecha: q.fechaTxt, estado: q.estado, lugar: q.lugar,
+      return { id: q.id, nombre: q.nombre, loQueImporta: q.loQueImporta, mensaje: q.mensaje, fecha: q.fechaTxt, estado: q.estado, lugar: q.lugar,
         asignado: q.asignado, asignadoNombre: asig ? asig.nombre : '', soyP1: soyP1,
         soyAsignada: !!(me && me.estado === 'Activa' && q.estado === 'Asignada' && me.pos === q.asignado) };
     });
@@ -290,7 +290,7 @@ function buildState_(correo, arbolPedido) {
     puedoPedir = !mine && !miPedido && !(yo && mias.length >= MAX_ARBOLES) && people.some(function (p) { return p.pos === '1' && p.estado === 'Activa'; });
   }
   var _mails = {}; all.forEach(function (p) { if (p.estado === 'Activa') _mails[p.correo] = 1; });
-  return { vacio: all.length === 0, redPersonas: Object.keys(_mails).length, activos: activos, temas: temas, alcanzado: alcanzado, max: MAX_ALCANCE, yo: yo, me: me,
+  return { vacio: all.length === 0, redPersonas: Object.keys(_mails).length, activos: activos, loQueImporta: loQueImporta, alcanzado: alcanzado, max: MAX_ALCANCE, yo: yo, me: me,
     alcances: alcances, orden: orden, arbol: arbol, arboles: arboles, maxArboles: MAX_ARBOLES,
     puedoPlantar: !!(yo && mias.length < MAX_ARBOLES), pedidos: pedidos, libres: libres, puedoPedir: puedoPedir, miPedido: miPedido };
 }
@@ -355,7 +355,7 @@ function getState(token, inv, arbol) {
       var de = people.filter(function (x) { return x.pos === p.invito; })[0];
       var t = treeById_(trees, info.arbol);
       st.invitacion = { correo: p.correo, pos: p.pos, estado: 'Convocada', de: de ? (de.nombre || '') : '', arbol: info.arbol,
-        arbolNombre: t && t.acordado ? t.nombre : '', conocida: rowsOf_(all, p.correo).some(function (x) { return x.estado === 'Activa'; }) };
+        arbolTema: t && t.acordado ? t.tema : '', conocida: rowsOf_(all, p.correo).some(function (x) { return x.estado === 'Activa'; }) };
     } else st.invitacion = { estado: 'Usada', correo: p ? p.correo : (info ? info.correo : '') };
   }
   return st;
@@ -391,7 +391,7 @@ function accessLink_(correo, minutos, arbol) {
   props.setProperty('acc_' + k, JSON.stringify({ correo: correo, exp: now + (minutos ? minutos * 6e4 : ACCESS_DAYS * 864e5), arbol: arbol || '' }));
   return u + '?acc=' + k + (arbol ? '&arbol=' + arbol : '');
 }
-function entrarConEnlace(acc, nombre, tema) {
+function entrarConEnlace(acc, nombre, loQueImporta) {
   acc = String(acc || '');
   if (!/^[a-f0-9]{40}$/.test(acc)) fail_('Este enlace no es válido. Se puede entrar con el correo desde la app.');
   var props = PropertiesService.getScriptProperties(), raw = props.getProperty('acc_' + acc);
@@ -408,17 +408,17 @@ function entrarConEnlace(acc, nombre, tema) {
   if (!rows.length && all.length > 0) { props.deleteProperty('acc_' + acc); fail_('Este correo no tiene convocatoria.'); }
   // Primera vez: falta el nombre. El enlace no se gasta hasta que lo escriba.
   var primera = rows.filter(function (p) { return p.estado === 'Convocada'; })[0];
-  nombre = clean_(nombre, 60); tema = cleanTema_(tema);
-  if (!nombre && !tema) return { necesitaNombre: true, pos: primera ? primera.pos : '1', correo: d.correo };
-  needNombreTema_(nombre, tema);
+  nombre = clean_(nombre, 60); loQueImporta = cleanLoQueImporta_(loQueImporta);
+  if (!nombre && !loQueImporta) return { necesitaNombre: true, pos: primera ? primera.pos : '1', correo: d.correo };
+  needNombreLoQueImporta_(nombre, loQueImporta);
   props.deleteProperty('acc_' + acc);
-  var res = withLock_(function () { return ocuparLugar_(d.correo, nombre, tema); });
+  var res = withLock_(function () { return ocuparLugar_(d.correo, nombre, loQueImporta); });
   CacheService.getScriptCache().remove('code_' + d.correo);
   if (res.aviso) { try { avisoEntrada_(res.aviso); } catch (e) {} }
   return { token: issueToken_(d.correo), nombre: nombre, arbol: res.arbol };
 }
 // Ocupa el lugar de quien entra por primera vez: su invitación más antigua, o la semilla del primer árbol si no hay nadie.
-function ocuparLugar_(correo, nombre, tema) {
+function ocuparLugar_(correo, nombre, loQueImporta) {
   var all = readAll_();
   var rows = rowsOf_(all, correo);
   var s = sheet_();
@@ -429,7 +429,7 @@ function ocuparLugar_(correo, nombre, tema) {
     s.getRange(mine.row, 3).setValue(nombre);
     s.getRange(mine.row, 6).setValue('Activa');
     s.getRange(mine.row, 8).setValue(new Date());
-    s.getRange(mine.row, 9).setValue(tema);
+    s.getRange(mine.row, 9).setValue(loQueImporta);
     dropInvites_(correo, mine.arbol);
     var inv = peopleOf_(all, mine.arbol).filter(function (p) { return p.pos === mine.invito; })[0];
     return { aviso: inv && inv.correo ? { to: inv.correo, nombre: nombre, pos: mine.pos, arbol: mine.arbol } : null, arbol: mine.arbol };
@@ -439,7 +439,7 @@ function ocuparLugar_(correo, nombre, tema) {
     var id = treeById_(trees, 't1') ? nextTreeId_(trees) : 't1';
     if (!treeById_(trees, id)) appendTree_(id, correo);
     s.getRange(2, 1, 1, COLS).setNumberFormats(FORMATS);
-    s.getRange(2, 1, 1, COLS).setValues([['1', 1, nombre, correo, '', 'Activa', new Date(), new Date(), tema, id]]);
+    s.getRange(2, 1, 1, COLS).setValues([['1', 1, nombre, correo, '', 'Activa', new Date(), new Date(), loQueImporta, id]]);
     return { aviso: null, arbol: id };
   }
   fail_('Este correo no tiene convocatoria.');
@@ -452,26 +452,25 @@ function avisoEntrada_(aviso) {
 }
 function inviteLink_(correo, arbol) { var u = appUrl_(); return u ? u + '?inv=' + newInvite_(correo, arbol) : ''; }
 function inviteLines_(de, pos, tree) {
-  var donde = tree && tree.acordado && tree.nombre
-    ? 'en el árbol «' + escHtml_(tree.nombre) + '» de WhatMatters'
-    : 'en la semilla de un árbol nuevo de WhatMatters';
-  var lines = ['Hola:', escHtml_(de) + ' te convocó a sumarte a su tríada ' + donde + ', en la posición ' + pos + '.'];
-  if (!(tree && tree.acordado)) lines.push('El nombre de este árbol lo van a acordar entre las tres personas de la semilla.');
-  lines.push('Con el botón se acepta la convocatoria. Si es tu primera vez, vas a escribir tu nombre y lo que te importa. Este enlace es personal: conviene no reenviarlo.');
+  var conTema = !!(tree && tree.acordado && tree.tema);
+  var donde = conTema ? 'del árbol «' + escHtml_(tree.tema) + '» de WhatMatters' : 'semilla de un árbol nuevo de WhatMatters';
+  var lines = ['Hola:', escHtml_(de) + ' te convocó a su tríada ' + donde + ', en la posición ' + pos + '.'];
+  if (!conTema) lines.push('El tema de este árbol lo acuerdan las tres personas de la semilla.');
+  lines.push('Con el botón podés ver la convocatoria.'); // Pendiente: una frase que explique que el botón entra sin clave
   return lines;
 }
 
 // Aceptar desde el enlace del correo: la llave prueba que la persona recibió la invitación.
-function aceptarInvitacion(inv, nombre, tema) {
+function aceptarInvitacion(inv, nombre, loQueImporta) {
   var info = inviteFrom_(inv);
   if (!info) fail_('Esta convocatoria ya no es válida. Quien te convocó puede reenviártela.');
-  nombre = clean_(nombre, 60); tema = cleanTema_(tema);
+  nombre = clean_(nombre, 60); loQueImporta = cleanLoQueImporta_(loQueImporta);
   var aviso = withLock_(function () {
     var all = readAll_();
     var act = rowsOf_(all, info.correo).filter(function (p) { return p.estado === 'Activa'; })[0];
     // Quien ya está en otro árbol entra con su perfil de siempre.
-    if (act) { nombre = act.nombre; tema = act.tema; } else needNombreTema_(nombre, tema);
-    return activar_(all, info.correo, info.arbol, nombre, tema);
+    if (act) { nombre = act.nombre; loQueImporta = act.loQueImporta; } else needNombreLoQueImporta_(nombre, loQueImporta);
+    return activar_(all, info.correo, info.arbol, nombre, loQueImporta);
   });
   dropInvites_(info.correo, info.arbol);
   if (aviso) { try { avisoEntrada_(aviso); } catch (e) {} }
@@ -484,13 +483,13 @@ function aceptarEnApp(token, arbol) {
   var aviso = withLock_(function () {
     var all = readAll_();
     yo = requireYo_(all, token);
-    return activar_(all, yo.correo, arbol, yo.activa.nombre, yo.activa.tema);
+    return activar_(all, yo.correo, arbol, yo.activa.nombre, yo.activa.loQueImporta);
   });
   dropInvites_(yo.correo, arbol);
   if (aviso) { try { avisoEntrada_(aviso); } catch (e) {} }
   return true;
 }
-function activar_(all, correo, arbol, nombre, tema) {
+function activar_(all, correo, arbol, nombre, loQueImporta) {
   var people = peopleOf_(all, arbol);
   var mine = people.filter(function (p) { return p.correo === correo; })[0];
   if (!mine) fail_('Esta convocatoria fue cancelada.');
@@ -499,7 +498,7 @@ function activar_(all, correo, arbol, nombre, tema) {
   s.getRange(mine.row, 3).setValue(nombre);
   s.getRange(mine.row, 6).setValue('Activa');
   s.getRange(mine.row, 8).setValue(new Date());
-  s.getRange(mine.row, 9).setValue(tema);
+  s.getRange(mine.row, 9).setValue(loQueImporta);
   var de = people.filter(function (p) { return p.pos === mine.invito; })[0];
   return de && de.correo ? { to: de.correo, nombre: nombre, pos: mine.pos, arbol: arbol } : null;
 }
@@ -531,8 +530,8 @@ function pedirCodigo(correo) {
 }
 
 // Paso 2: verificar el código. Devuelve una sesión. Si la persona entra por primera vez, ocupa su lugar con su nombre.
-function verificarCodigo(correo, code, nombre, tema) {
-  correo = normMail_(correo); code = String(code || '').replace(/\D/g, ''); nombre = clean_(nombre, 60); tema = cleanTema_(tema);
+function verificarCodigo(correo, code, nombre, loQueImporta) {
+  correo = normMail_(correo); code = String(code || '').replace(/\D/g, ''); nombre = clean_(nombre, 60); loQueImporta = cleanLoQueImporta_(loQueImporta);
   var cache = CacheService.getScriptCache();
   var expected = cache.get('code_' + correo);
   if (!expected) fail_('El código venció o no existe. Se puede pedir uno nuevo.');
@@ -542,8 +541,8 @@ function verificarCodigo(correo, code, nombre, tema) {
   var res = withLock_(function () {
     var act = rowsOf_(readAll_(), correo).filter(function (p) { return p.estado === 'Activa'; })[0];
     if (act) return { aviso: null, arbol: act.arbol };
-    needNombreTema_(nombre, tema);
-    return ocuparLugar_(correo, nombre, tema);
+    needNombreLoQueImporta_(nombre, loQueImporta);
+    return ocuparLugar_(correo, nombre, loQueImporta);
   });
   cache.remove('code_' + correo);
   if (res.aviso) { try { avisoEntrada_(res.aviso); } catch (e) {} }
@@ -638,7 +637,7 @@ function plantarArbol(token, correo2, correo3) {
     var s = sheet_();
     var row = Math.max(s.getLastRow(), 1) + 1;
     s.getRange(row, 1, 1, COLS).setNumberFormats(FORMATS);
-    s.getRange(row, 1, 1, COLS).setValues([['1', 1, yo.activa.nombre, yo.correo, '', 'Activa', new Date(), new Date(), yo.activa.tema, id]]);
+    s.getRange(row, 1, 1, COLS).setValues([['1', 1, yo.activa.nombre, yo.correo, '', 'Activa', new Date(), new Date(), yo.activa.loQueImporta, id]]);
     return id;
   });
   var errores = [];
@@ -654,8 +653,8 @@ function semillaYo_(token, arbol) {
   if (!tree) fail_('No encontramos ese árbol.');
   var people = peopleOf_(all, arbol);
   var me = requireMeActive_(people, token);
-  if (SEMILLA.indexOf(me.pos) < 0) fail_('El nombre lo acuerdan las tres personas de la semilla.');
-  if (tree.acordado) fail_('El nombre de este árbol ya está acordado.');
+  if (SEMILLA.indexOf(me.pos) < 0) fail_('El tema lo acuerdan las tres personas de la semilla.');
+  if (tree.acordado) fail_('El tema de este árbol ya está acordado.');
   return { tree: tree, people: people, me: me };
 }
 // Si las tres personas de la semilla están de acuerdo con la propuesta, el tema queda fijo.
@@ -664,30 +663,30 @@ function cerrarAcuerdo_(tree, people, acuerdos) {
   var activos = SEMILLA.filter(function (pos) { return people.some(function (p) { return p.pos === pos && p.estado === 'Activa'; }); });
   a.getRange(tree.row, 12).setValue(acuerdos.join(','));
   if (activos.length === 3 && SEMILLA.every(function (pos) { return acuerdos.indexOf(pos) >= 0; })) {
-    a.getRange(tree.row, 2, 1, 4).setValues([[tree.prop.nombre, tree.prop.tipo, tree.prop.desc, 'Tema acordado']]);
+    a.getRange(tree.row, 2, 1, 4).setValues([[tree.prop.tema, tree.prop.tipo, tree.prop.desc, 'Tema acordado']]);
     a.getRange(tree.row, 13).setValue(new Date());
     return true;
   }
   return false;
 }
 // lugar: solo para los árboles geográficos.
-function proponerTema(token, arbol, nombre, tipo, lugar) {
-  nombre = clean_(nombre, 60); tipo = clean_(tipo, 20); var desc = clean_(lugar, 240);
-  if (!nombre) fail_('Falta el nombre del árbol.');
+function proponerTema(token, arbol, tema, tipo, lugar) {
+  tema = clean_(tema, 60); tipo = clean_(tipo, 20); var desc = clean_(lugar, 240);
+  if (!tema) fail_('Falta el tema del árbol.');
   if (TIPOS.indexOf(tipo) < 0) fail_('Falta elegir si el árbol es temático o geográfico.');
   if (tipo === 'Geográfico' && !desc) fail_('Falta el lugar del árbol geográfico.');
   if (tipo !== 'Geográfico') desc = '';
   return withLock_(function () {
     var d = semillaYo_(token, String(arbol || ''));
-    sheetArb_().getRange(d.tree.row, 8, 1, 4).setValues([[nombre, tipo, desc, d.me.pos]]);
-    d.tree.prop = { nombre: nombre, tipo: tipo, desc: desc, de: d.me.pos };
+    sheetArb_().getRange(d.tree.row, 8, 1, 4).setValues([[tema, tipo, desc, d.me.pos]]);
+    d.tree.prop = { tema: tema, tipo: tipo, desc: desc, de: d.me.pos };
     return { acordado: cerrarAcuerdo_(d.tree, d.people, [d.me.pos]) };
   });
 }
 function acordarTema(token, arbol) {
   return withLock_(function () {
     var d = semillaYo_(token, String(arbol || ''));
-    if (!d.tree.prop) fail_('Todavía no hay una propuesta de nombre.');
+    if (!d.tree.prop) fail_('Todavía no hay una propuesta de tema.');
     var acuerdos = d.tree.acuerdos.slice();
     if (acuerdos.indexOf(d.me.pos) < 0) acuerdos.push(d.me.pos);
     return { acordado: cerrarAcuerdo_(d.tree, d.people, acuerdos) };
@@ -713,7 +712,7 @@ function readPedidos_() {
   return s.getRange(2, 1, n, QCOLS).getValues().map(function (r, i) {
     var f = Object.prototype.toString.call(r[1]) === '[object Date]' ? r[1].getTime() : 0;
     return { row: i + 2, id: String(r[0]), fecha: f, fechaTxt: fmtDate_(r[1]), arbol: String(r[2]), nombre: clean_(r[3], 60), correo: normMail_(r[4]),
-      tema: cleanTema_(r[5]), mensaje: clean_(r[6], 400), estado: legado_(clean_(r[7])), lugar: String(r[8] || ''), asignado: String(r[9] || ''), clave: String(r[10] || '') };
+      loQueImporta: cleanLoQueImporta_(r[5]), mensaje: clean_(r[6], 400), estado: legado_(clean_(r[7])), lugar: String(r[8] || ''), asignado: String(r[9] || ''), clave: String(r[10] || '') };
   }).filter(function (q) { return q.id; });
 }
 function pedidoVigente_(q) {
@@ -745,12 +744,12 @@ function avisoPedido_(q) {
   var p1 = people.filter(function (p) { return p.pos === '1' && p.estado === 'Activa'; })[0];
   if (!p1) return;
   var lines = [escHtml_(q.nombre) + ' quiere sumarse a tu árbol «' + escHtml_(treeLabel_(tree, people)) + '».',
-    'Lo que importa: <b>' + escHtml_(q.tema) + '</b>'];
+    'Lo que importa: <b>' + escHtml_(q.loQueImporta) + '</b>'];
   if (q.mensaje) lines.push('Su mensaje: «' + escHtml_(q.mensaje) + '»');
   lines.push('Como persona 1 del árbol, decidís en qué posición se sumaría: puede ser una tuya, y la convocatoria sale en el momento, o la de otra persona del árbol, que recibe el aviso para convocarla.');
   sendMail_(p1.correo, q.nombre + ' quiere sumarse a tu árbol en WhatMatters', lines, 'Ver el pedido', accessLink_(p1.correo, 0, q.arbol));
 }
-function pedirSumarme(token, arbol, nombre, correo, tema, mensaje) {
+function pedirSumarme(token, arbol, nombre, correo, loQueImporta, mensaje) {
   arbol = String(arbol || ''); mensaje = clean_(mensaje, 400);
   var r = withLock_(function () {
     var all = readAll_(), tree = treeById_(readTrees_(), arbol);
@@ -759,20 +758,20 @@ function pedirSumarme(token, arbol, nombre, correo, tema, mensaje) {
     if (!people.some(function (p) { return p.pos === '1' && p.estado === 'Activa'; })) fail_('Este árbol todavía no tiene a su persona 1.');
     var yoCorreo = emailFromToken_(token);
     var act = yoCorreo ? rowsOf_(all, yoCorreo).filter(function (p) { return p.estado === 'Activa'; })[0] : null;
-    if (act) { correo = yoCorreo; nombre = act.nombre; tema = act.tema; }
+    if (act) { correo = yoCorreo; nombre = act.nombre; loQueImporta = act.loQueImporta; }
     else {
-      correo = normMail_(correo); nombre = clean_(nombre, 60); tema = cleanTema_(tema);
+      correo = normMail_(correo); nombre = clean_(nombre, 60); loQueImporta = cleanLoQueImporta_(loQueImporta);
       if (!isMail_(correo)) fail_('El correo no es válido.');
-      needNombreTema_(nombre, tema);
+      needNombreLoQueImporta_(nombre, loQueImporta);
     }
     if (people.some(function (p) { return p.correo === correo; })) fail_('Ya estás en este árbol o tenés una convocatoria pendiente en él.');
     if (rowsOf_(all, correo).length >= MAX_ARBOLES) fail_('Ya estás en tres árboles, que es el máximo.');
     if (readPedidos_().some(function (q) { return q.arbol === arbol && q.correo === correo && pedidoVigente_(q); })) fail_('Ya hay un pedido tuyo para sumarte a este árbol.');
     var cache = CacheService.getScriptCache();
     if (!act && cache.get('ped_' + correo)) fail_('Ya mandamos un correo de confirmación hace poco. Puede estar en la carpeta de spam.');
-    var q = { id: newToken_().slice(0, 12), arbol: arbol, nombre: nombre, correo: correo, tema: tema, mensaje: mensaje, clave: act ? '' : newToken_() };
+    var q = { id: newToken_().slice(0, 12), arbol: arbol, nombre: nombre, correo: correo, loQueImporta: loQueImporta, mensaje: mensaje, clave: act ? '' : newToken_() };
     var s = sheetSum_(), row = Math.max(s.getLastRow(), 1) + 1;
-    s.getRange(row, 1, 1, QCOLS).setValues([[q.id, new Date(), arbol, nombre, correo, tema, mensaje, act ? 'Pendiente' : 'Sin confirmar', '', '', q.clave, '']]);
+    s.getRange(row, 1, 1, QCOLS).setValues([[q.id, new Date(), arbol, nombre, correo, loQueImporta, mensaje, act ? 'Pendiente' : 'Sin confirmar', '', '', q.clave, '']]);
     if (!act) cache.put('ped_' + correo, '1', 120);
     q.tree = tree; q.people = people;
     return q;
@@ -824,7 +823,7 @@ function asignarPedido(token, id, lugar) {
   try {
     sendMail_(d.dueno.correo, d.q.nombre + ' quiere sumarse a tu tríada en WhatMatters',
       [escHtml_(d.de) + ', persona 1 del árbol «' + escHtml_(d.label) + '», propone que ' + escHtml_(d.q.nombre) + ' se sume en la posición ' + lugar + ' de tu tríada.',
-       'Lo que importa: <b>' + escHtml_(d.q.tema) + '</b>' + (d.q.mensaje ? '<br>Su mensaje: «' + escHtml_(d.q.mensaje) + '»' : ''),
+       'Lo que importa: <b>' + escHtml_(d.q.loQueImporta) + '</b>' + (d.q.mensaje ? '<br>Su mensaje: «' + escHtml_(d.q.mensaje) + '»' : ''),
        'En la app, junto al pedido, están las opciones para convocarla o para avisar que no podés.'],
       'Ver el pedido', accessLink_(d.dueno.correo, 0, d.q.arbol));
   } catch (e) {}
@@ -863,12 +862,12 @@ function cerrarPedido(token, id) {
 function adminMail_() { try { return normMail_(Session.getEffectiveUser().getEmail()); } catch (e) { return ''; } }
 function isAdminMail_(correo) { var a = adminMail_(); return !!a && normMail_(correo) === a; }
 // Perfil: cada persona cambia su nombre y lo que le importa, en todos sus árboles.
-function cambiarPerfil(token, nombre, tema) {
-  nombre = clean_(nombre, 60); tema = cleanTema_(tema);
-  needNombreTema_(nombre, tema);
+function cambiarPerfil(token, nombre, loQueImporta) {
+  nombre = clean_(nombre, 60); loQueImporta = cleanLoQueImporta_(loQueImporta);
+  needNombreLoQueImporta_(nombre, loQueImporta);
   return withLock_(function () {
     var yo = requireYo_(readAll_(), token);
-    yo.rows.forEach(function (r) { if (r.estado !== 'Activa') return; sheet_().getRange(r.row, 3).setValue(nombre); sheet_().getRange(r.row, 9).setValue(tema); });
+    yo.rows.forEach(function (r) { if (r.estado !== 'Activa') return; sheet_().getRange(r.row, 3).setValue(nombre); sheet_().getRange(r.row, 9).setValue(loQueImporta); });
     return true;
   });
 }
@@ -937,7 +936,8 @@ function reiniciarRed() {
   Logger.log('Red reiniciada.');
 }
 
-// Migración de vocabulario: 'Invitada' pasa a 'Convocada' (Personas y Quieren sumarse) y se renombran dos cabeceras.
+// Migración de vocabulario: 'Invitada' pasa a 'Convocada' (Personas y Quieren sumarse); en Personas las cabeceras dicen Convocó y Fecha de convocatoria;
+// en Árboles, Tema y Propuesta: tema (antes Nombre y Propuesta: nombre).
 // El código ya lee los dos valores, así que se puede ejecutar en cualquier momento. Es seguro repetirla.
 function migrarConvocadas_() {
   withLock_(function () {
@@ -951,6 +951,8 @@ function migrarConvocadas_() {
       s.getRange(1, 5).setValue(HEAD[4]);
       s.getRange(1, 7).setValue(HEAD[6]);
     }
+    var a = sheetArb_();
+    if (a) { a.getRange(1, 2).setValue(AHEAD[1]); a.getRange(1, 8).setValue(AHEAD[7]); }
     var q = SpreadsheetApp.getActive().getSheetByName(SHEET_SUM);
     if (q) {
       var m = q.getLastRow() - 1;
@@ -962,6 +964,7 @@ function migrarConvocadas_() {
   });
 }
 function migrarConvocadas() { soloAdministradora_(); migrarConvocadas_(); Logger.log('Migración hecha.'); }
+function migrarVocabulario() { migrarConvocadas(); }
 
 // Deja la planilla con lo que usa la app y reescribe "Cómo se juega". Se puede ejecutar de nuevo desde el editor cuando cambian las reglas.
 function ordenarPlanilla() {
@@ -987,7 +990,7 @@ function ordenarPlanilla() {
     ['Tríada', 'Grupo de tres posiciones. La primera de cada árbol es la semilla: posiciones 1, 2 y 3.'],
     ['Entrar', 'Solo con convocatoria por correo. La primera vez, cada persona escribe su nombre y lo que importa (al menos una palabra; se puede cambiar o ampliar después desde Mi perfil).'],
     ['Varios árboles', 'Cada persona puede estar en hasta tres árboles, con el mismo perfil. Cualquiera que ya esté en un árbol puede plantar uno nuevo: ocupa la posición 1 y convoca a las posiciones 2 y 3.'],
-    ['Nombre del árbol', 'Lo acuerdan las tres personas de la semilla. Como propuesta inicial se toma lo que cada una puso en Lo que importa. Una propone el nombre y el tipo (temático o geográfico, y en ese caso de qué lugar), y queda fijo cuando las tres están de acuerdo. Hasta entonces la semilla puede completarse, pero no se abren las tríadas siguientes.'],
+    ['Tema del árbol', 'Lo acuerdan las tres personas de la semilla. Una propone el tema y el tipo (temático o geográfico, y en ese caso de qué lugar), y queda fijo cuando las tres están de acuerdo. Hasta entonces la semilla puede completarse, pero no se abren las tríadas siguientes.'],
     ['Quieren sumarse', 'Quien quiere sumarse a un árbol deja un pedido desde la app. La persona 1 del árbol recibe el aviso por correo y decide en qué posición se sumaría: si la posición es suya, convoca en el momento; si es de otra persona, esa persona recibe el aviso para convocar. Los pedidos vencen a los 30 días.'],
     ['Tu tríada', 'Cada persona tiene su propia tríada en el alcance siguiente: sigue ocupando la primera posición (quien está en 1 también está en 1.1) y convoca a las otras dos (1.2 y 1.3).'],
     ['Tríadas siguientes', 'Las tríadas que siguen en la cadena de cada persona (1.1.1, 1.1.2, 1.1.3…) se abren cuando se completa la anterior.'],
@@ -1011,10 +1014,10 @@ function ordenarPlanilla() {
     ['', ''],
     ['La pestaña Árboles', ''],
     ['Árbol', 'Código del árbol.'],
-    ['Nombre, Tipo, Lugar', 'Lo acordado por la semilla. Vacío mientras no hay acuerdo.'],
+    ['Tema, Lugar', 'Lo acordado por la semilla. Vacío mientras no hay acuerdo.'],
     ['Estado', 'Sin tema o Tema acordado.'],
     ['Plantó (correo), Fecha', 'Quién plantó la semilla y cuándo.'],
-    ['Propuesta', 'La propuesta de nombre que se está acordando, quién la hizo y qué posiciones de la semilla ya están de acuerdo.'],
+    ['Propuesta', 'La propuesta de tema que se está acordando, quién la hizo y qué posiciones de la semilla ya están de acuerdo.'],
     ['La pestaña Quieren sumarse', 'Los pedidos para sumarse a cada árbol: quién, lo que le importa, su mensaje, el estado (Sin confirmar, Pendiente, Asignada, Convocada o Cerrada) y la posición elegida.'],
     ['', 'La app escribe estas pestañas. Conviene no editarlas a mano: para corregir algo, usar las herramientas de administradora de la app.'],
     ['', ''],

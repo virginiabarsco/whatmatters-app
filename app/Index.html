@@ -290,9 +290,9 @@ button.brand { background: none; border: 0; box-shadow: none; padding: 0; min-he
 svg.wmlogo .o { stroke: var(--wm-o); } svg.wmlogo .c { stroke: var(--wm-c); } svg.wmlogo .k { stroke: var(--wm-k); opacity: .85; }
 svg.wmlogo .f { fill: var(--accent); stroke: none; }
 svg.wmlogo line { stroke-linecap: round; }
-#tema { display: inline-flex; align-items: center; gap: 6px; }
-#tema svg { flex: none; }
-@media (max-width: 480px) { #tema .tl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } #tema { min-height: 32px; padding: 4px 9px; } }
+#modo { display: inline-flex; align-items: center; gap: 6px; }
+#modo svg { flex: none; }
+@media (max-width: 480px) { #modo .tl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } #modo { min-height: 32px; padding: 4px 9px; } }
 .hero { position: relative; display: grid; justify-items: center; gap: 6px; padding: 26px 16px 22px; background: var(--hero); border: 1px solid var(--edge); clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px)); }
 .hero svg { width: 150px; height: 150px; cursor: pointer; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 45%, transparent)); }
 .hero .wm { font-size: 34px; letter-spacing: .2em; text-align: center; }
@@ -337,15 +337,15 @@ function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { re
 function lsSet(k, v) { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (e) {} }
 
 // Modo claro / oscuro: por defecto sigue al dispositivo; si la persona elige uno, queda guardado en este navegador.
-var TEMA = lsGet('wm_tema');
-function aplicarTema() { if (TEMA === 'claro') document.documentElement.setAttribute('data-theme', 'light'); else if (TEMA === 'oscuro') document.documentElement.setAttribute('data-theme', 'dark'); else document.documentElement.removeAttribute('data-theme'); }
-function temaOscuro() { return TEMA ? TEMA === 'oscuro' : !!(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches); }
-aplicarTema();
-function temaBtn() {
-  var osc = temaOscuro();
+var MODO = lsGet('wm_modo') || lsGet('wm_tema');
+function aplicarModo() { if (MODO === 'claro') document.documentElement.setAttribute('data-theme', 'light'); else if (MODO === 'oscuro') document.documentElement.setAttribute('data-theme', 'dark'); else document.documentElement.removeAttribute('data-theme'); }
+function modoOscuro() { return MODO ? MODO === 'oscuro' : !!(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches); }
+aplicarModo();
+function modoBtn() {
+  var osc = modoOscuro();
   var ico = osc ? '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="3" fill="currentColor"/><path d="M7 0.5v2M7 11.5v2M0.5 7h2M11.5 7h2M2.4 2.4l1.4 1.4M10.2 10.2l1.4 1.4M2.4 11.6l1.4-1.4M10.2 3.8l1.4-1.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
     : '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M11.5 9.2A5 5 0 0 1 4.8 2.5 5 5 0 1 0 11.5 9.2z" fill="currentColor"/></svg>';
-  return '<button type="button" class="chip" id="tema" aria-label="' + (osc ? 'Pasar a modo claro' : 'Pasar a modo oscuro') + '">' + ico + '<span class="tl">' + (osc ? 'Modo claro' : 'Modo oscuro') + '</span></button>';
+  return '<button type="button" class="chip" id="modo" aria-label="' + (osc ? 'Pasar a modo claro' : 'Pasar a modo oscuro') + '">' + ico + '<span class="tl">' + (osc ? 'Modo claro' : 'Modo oscuro') + '</span></button>';
 }
 // ---------- logo: el desarrollo del tetraedro; la W (naranja) y la M (cian) van por las aristas ----------
 var WMR3 = Math.sqrt(3), WMN = { A: [0, 0], B: [0, 100], C: [50 * WMR3, 50], M1: [0, 50], M2: [25 * WMR3, 25], M3: [25 * WMR3, 75] };
@@ -446,21 +446,13 @@ function member(l) {
   if (l.mia) h += '<div class="small"><button class="link" style="color:var(--ink)" data-resend="' + l.pos + '">Reenviar convocatoria</button> · <button class="link" data-cancel="' + l.pos + '">Cancelar</button></div>';
   return h;
 }
-var TEMA_FIELD = '<label>Lo que importa <span class="small muted" style="font-weight:400">Al menos una palabra, luego se puede cambiar o ampliar. Puede ser un tema, una canción, una película, un lugar, etc.</span><input id="temaIn" maxlength="120" required></label>';
+var LO_QUE_IMPORTA_FIELD = '<label>Lo que importa <span class="small muted" style="font-weight:400">Al menos una palabra, luego se puede cambiar o ampliar. Puede ser cualquier tema: una idea, una causa, un lugar…</span><input id="loQueImportaIn" maxlength="120" required></label>';
 var PERFIL = false;
 function modoVisita() { return !S.yo && !ACCN && !S.invitacion; }
 function comoFuncionaHtml() {
+  // El texto completo está en revisión; mientras tanto se ve solo este aviso.
   return '<div class="card welcome"><h2>Cómo funciona</h2>' +
-    '<ul class="small" style="margin:8px 0 10px;padding-left:18px;display:grid;gap:4px">' +
-    '<li>Se requiere una invitación para empezar y que te importe algún tema.</li>' +
-    '<li>Se juega formando "árboles" y "bosques" que crecen multiplicando por tres.</li>' +
-    '<li>Se recompensa a quienes logran los mayores y mejores acuerdos.</li></ul>' +
-    '<p class="small muted">Cada árbol nace de una semilla de tres personas que acuerdan su nombre. Cada una abre después su propia tríada, y así el árbol crece.</p>' +
-    '<ul class="small muted" style="margin:0;padding-left:18px;display:grid;gap:4px">' +
-    '<li>WhatMatters es transparente: todas las personas de la red pueden ver todos los árboles, con los nombres, lo que le importa a cada quien y sus posiciones.</li>' +
-    '<li>Tu correo no se muestra. Solo lo ve quien te convocó mientras la convocatoria está pendiente.</li>' +
-    '<li>Tu correo se usa únicamente para mandarte los avisos de la red y el botón para entrar.</li>' +
-    '<li>Los datos se guardan en una planilla de Google que administra quien creó la red.</li></ul>' +
+    '<p class="small">Este espacio está en proceso de redacción. Las dudas y los comentarios son bienvenidos por correo a <a href="mailto:whatmatters.pro@gmail.com">whatmatters.pro@gmail.com</a>.</p>' +
     '<div class="btns"><button type="button" class="ghost" data-ir="inicio">Volver al inicio</button><button type="button" data-ir="entrar">Entrar</button></div></div>';
 }
 function puertasHtml() {
@@ -475,13 +467,13 @@ function irA(v) { VISTA = v; PERFIL = false; RENAME = null; if (v === 'red') OTR
 function loginCard() {
   var inv = S.invitacion, h = '<div class="card">';
   if (inv && inv.estado === 'Convocada' && !LOGIN) {
-    h += '<h2>' + esc(inv.de || 'Alguien') + ' te convocó a su tríada</h2><p class="small muted">' + (inv.arbolNombre ? 'Es en el árbol «' + esc(inv.arbolNombre) + '». ' : 'Es en la semilla de un árbol nuevo: el tema lo van a acordar entre las tres personas de la semilla. ') + 'Vas a ocupar la posición ' + esc(inv.pos) + ' con el correo ' + esc(inv.correo) + '.</p>';
-    h += '<form id="acceptForm" style="display:grid;gap:10px">' + (inv.conocida ? '<p class="small">Ya estás en otro árbol: entrás con tu nombre y lo que importa de siempre.</p>' : '<label>Tu nombre <span class="small muted" style="font-weight:400">Así te va a ver el resto de la red.</span><input id="nameIn" autocomplete="name" required></label>' + TEMA_FIELD) + '<button type="submit">Aceptar la convocatoria</button></form>';
+    h += '<h2>' + esc(inv.de || 'Alguien') + ' te convocó a su tríada</h2><p class="small muted">' + convocaTxt(inv, true) + '</p>';
+    h += '<form id="acceptForm" style="display:grid;gap:10px">' + (inv.conocida ? '<p class="small">Ya estás en otro árbol, así que entrás con los mismos datos que ya están en tu perfil.</p>' : '<label>Tu nombre <span class="small muted" style="font-weight:400">Así te va a ver el resto de la red.</span><input id="nameIn" autocomplete="name" required></label>' + LO_QUE_IMPORTA_FIELD) + '<button type="submit">Aceptar la convocatoria</button></form>';
     return h + '</div>';
   }
   if (ACCN && !LOGIN) {
     h += '<h2>Ocupar tu posición</h2><p class="small muted">Vas a ocupar la posición ' + esc(ACCN.pos) + ' con el correo <b>' + esc(ACCN.correo) + '</b>.</p>';
-    h += '<form id="accForm" style="display:grid;gap:10px"><label>Tu nombre <span class="small muted" style="font-weight:400">Así te va a ver el resto de la red.</span><input id="nameIn" autocomplete="name" required></label>' + TEMA_FIELD + '<button type="submit">Ocupar mi posición (' + esc(ACCN.pos) + ')</button></form>';
+    h += '<form id="accForm" style="display:grid;gap:10px"><label>Tu nombre <span class="small muted" style="font-weight:400">Así te va a ver el resto de la red.</span><input id="nameIn" autocomplete="name" required></label>' + LO_QUE_IMPORTA_FIELD + '<button type="submit">Ocupar mi posición (' + esc(ACCN.pos) + ')</button></form>';
     return h + '</div>';
   }
   if (!LOGIN) {
@@ -497,17 +489,23 @@ function loginCard() {
   } else {
     h += '<h2>' + (LOGIN.necesitaNombre ? 'Ocupar tu posición' : 'Te mandamos un correo') + '</h2><p class="small muted">' + (LOGIN.necesitaNombre ? 'Te mandamos un correo a <b>' + esc(LOGIN.correo) + '</b>. Con el botón «Ocupar mi posición» del correo se entra directo; también se puede escribir acá el código de 6 dígitos que viene debajo, tu nombre y lo que te importa.' : 'Te mandamos un correo a <b>' + esc(LOGIN.correo) + '</b>. Con el botón «Entrar» del correo se entra directo; también se puede escribir acá el código de 6 dígitos que viene debajo.') + ' Si no aparece en unos minutos, puede estar en la carpeta de spam.</p>';
     h += '<form id="codeForm" style="display:grid;gap:10px"><label>Código<input id="codeIn" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required></label>';
-    if (LOGIN.necesitaNombre) h += '<label>Tu nombre <span class="small muted" style="font-weight:400">Así te va a ver el resto de la red.</span><input id="nameIn" autocomplete="name" required></label>' + TEMA_FIELD;
+    if (LOGIN.necesitaNombre) h += '<label>Tu nombre <span class="small muted" style="font-weight:400">Así te va a ver el resto de la red.</span><input id="nameIn" autocomplete="name" required></label>' + LO_QUE_IMPORTA_FIELD;
     h += '<button type="submit">' + (LOGIN.necesitaNombre ? 'Ocupar mi posición (' + esc(LOGIN.pos) + ')' : 'Entrar') + '</button>';
     h += '<button type="button" class="link" style="color:var(--muted);justify-self:start" id="otherMail">Usar otro correo</button></form>';
   }
   return h + '</div>';
 }
+// Texto de la convocatoria: dónde es, qué posición y (si hace falta) con qué correo y quién acuerda el tema.
+function convocaTxt(inv, conCorreo) {
+  return (inv.arbolTema ? 'Es una tríada del árbol «' + esc(inv.arbolTema) + '» de WhatMatters. ' : 'Es la tríada semilla de un árbol nuevo de WhatMatters. ') +
+    'Vas a ocupar la posición ' + esc(inv.pos) + (conCorreo ? ' con el correo ' + esc(inv.correo) : '') + '.' +
+    (inv.arbolTema ? '' : ' El tema de este árbol lo acuerdan las tres personas de la semilla.');
+}
 function otherSessionCard() {
   var inv = S.invitacion;
   if (!S.yo || !inv || inv.estado !== 'Convocada') return '';
   if (inv.correo === S.yo.correo) return '<div class="card" style="border-color:var(--sap)"><h2>' + esc(inv.de || 'Alguien') + ' te convocó a su tríada</h2>' +
-    '<p class="small muted">' + (inv.arbolNombre ? 'En el árbol «' + esc(inv.arbolNombre) + '»' : 'En la semilla de un árbol nuevo') + ', en la posición ' + esc(inv.pos) + '. Entrás con tu nombre y lo que importa de siempre.</p>' +
+    '<p class="small muted">' + convocaTxt(inv, false) + ' Ya estás en otro árbol, así que entrás con los mismos datos que ya están en tu perfil.</p>' +
     '<button type="button" data-aceptar="' + esc(inv.arbol) + '">Aceptar la convocatoria</button></div>';
   return '<div class="card" style="border-color:var(--sap)"><h2>Esta convocatoria es para ' + esc(inv.correo) + '</h2>' +
     '<p class="small muted">En este dispositivo está conectada la cuenta de ' + esc(S.yo.nombre || S.yo.correo) + '. Para aceptar la convocatoria hay que salir primero.</p>' +
@@ -739,7 +737,7 @@ function mcard() {
       var own = [], b = pid === '1' ? '' : pid; while (mlen(b) < M.D) { own.push(b); b = b === '' ? '1' : b + '.1'; }
       h += '<div class="who"><span class="pdot" style="--c:' + colorOf(pid) + '"></span><b class="name">' + esc(M.people[pid]) + (pid === M.me ? ' (vos)' : '') + '</b></div>';
       h += '<span class="small muted">Está en ' + pos.join(' · ') + '. ' + (pid === '1' ? 'Plantó la semilla' : 'Entró ' + where) + '.</span>' +
-        (S.temas && S.temas[pid] ? '<span class="small">Lo que importa: <b>' + esc(S.temas[pid]) + '</b></span>' : '');
+        (S.loQueImporta && S.loQueImporta[pid] ? '<span class="small">Lo que importa: <b>' + esc(S.loQueImporta[pid]) + '</b></span>' : '');
       h += '<div class="acts"><button type="button" class="xlink" data-golist="' + pid + '">Ver en la lista →</button>' +
         (pid === M.me ? '<button type="button" class="xlink" data-perfil="1">Mi perfil</button>' : (ADMIN() ? '<button type="button" class="xlink" data-rename="' + pid + '">Corregir nombre</button>' : '')) +
         (ADMIN() && pid !== M.me ? (QCONF === pid ? '<span class="small">¿Quitar a ' + esc(M.people[pid]) + ' de este árbol? <button type="button" class="link" data-quitar-ok="' + pid + '">Sí, quitar</button> · <button type="button" class="link" style="color:var(--ink)" data-quitar-no="1">No</button></span>' : '<button type="button" class="link" data-quitar="' + pid + '">Quitar del árbol</button>') : '') + '</div>';
@@ -924,8 +922,8 @@ function bindSearch() {
 function arbolInfo() {
   var a = S.arbol; if (!a) return '';
   var h = '';
-  if (!S.yo) h += '<div class="tbar"><span><span class="k">Árbol</span><span class="v">' + esc(a.nombre) + '</span></span></div>';
-  else if (!S.me) h += '<div class="tbar ajeno"><span><span class="k">Estás mirando</span><span class="v">' + esc(a.nombre) + '</span><span class="small muted" style="display:block">No estás en este árbol</span></span></div>';
+  if (!S.yo) h += '<div class="tbar"><span><span class="k">Árbol</span><span class="v">' + esc(a.titulo) + '</span></span></div>';
+  else if (!S.me) h += '<div class="tbar ajeno"><span><span class="k">Estás mirando</span><span class="v">' + esc(a.titulo) + '</span><span class="small muted" style="display:block">No estás en este árbol</span></span></div>';
   if (a.acordado && ((a.tipo && !S.me) || a.desc)) h += '<div class="tdesc"><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">' + (a.tipo && !S.me ? '<span class="tag">' + esc(a.tipo) + '</span>' : '') + (a.desc ? '<span class="small">' + (a.tipo === 'Geográfico' ? 'Lugar: ' : '') + esc(a.desc) + '</span>' : '') + '</div></div>';
   return h;
 }
@@ -933,8 +931,8 @@ function tcardHtml(t, compact) {
   var cur = S.arbol && t.id === S.arbol.id;
   var tags = '<span class="tag ' + (t.esArbol ? 'arbol">Árbol' : 'semilla">Semilla') + '</span>' + (t.tipo ? '<span class="tag">' + esc(t.tipo) + '</span>' : '');
   var info = num(t.personas) + (t.personas === 1 ? ' persona' : ' personas') + (t.ajeno ? '' : t.estado === 'Convocada' ? ' · te convocaron a la posición ' + esc(t.pos) : ' · tu posición: ' + esc(t.pos));
-  var aviso = !t.acordado ? '<span class="small muted">' + (t.falta ? 'Hay una propuesta de nombre para acordar.' : 'Falta acordar el nombre.') + '</span>' : '';
-  var h = '<button type="button" class="tcard' + (cur ? ' cur' : '') + (compact ? ' mini' : '') + '" data-tree="' + esc(t.id) + '"' + (cur ? ' aria-current="true"' : '') + '><b>' + esc(t.nombre) + '</b><span class="row">' + tags + '<span class="small muted">' + info + '</span></span>' + (compact ? '' : aviso) + '</button>';
+  var aviso = !t.acordado ? '<span class="small muted">' + (t.falta ? 'Hay una propuesta de tema para acordar.' : 'Falta acordar el tema.') + '</span>' : '';
+  var h = '<button type="button" class="tcard' + (cur ? ' cur' : '') + (compact ? ' mini' : '') + '" data-tree="' + esc(t.id) + '"' + (cur ? ' aria-current="true"' : '') + '><b>' + esc(t.titulo) + '</b><span class="row">' + tags + '<span class="small muted">' + info + '</span></span>' + (compact ? '' : aviso) + '</button>';
   if (t.estado === 'Convocada') h += '<button type="button" data-aceptar="' + esc(t.id) + '">Aceptar la convocatoria a este árbol</button>';
   return h;
 }
@@ -948,7 +946,7 @@ function misArboles() {
       h += '<form id="plantForm" class="card" style="gap:10px"><h2>Plantar un árbol</h2><p class="small">Vas a ocupar la posición 1 de una semilla nueva y convocar a dos personas para las posiciones 2 y 3.</p>' +
         '<label>Posición 2<input id="pl2" type="email" placeholder="Correo de la persona" required></label>' +
         '<label>Posición 3<input id="pl3" type="email" placeholder="Correo de la persona" required></label>' +
-        '<p class="small muted">El nombre del árbol no lo elige quien planta: lo acuerdan las tres personas de la semilla cuando entren. Esta semilla va a ocupar uno de tus tres árboles.</p>' +
+        '<p class="small muted">El tema del árbol no lo elige quien planta: lo acuerdan las tres personas de la semilla cuando entren. Esta semilla va a ocupar uno de tus tres árboles.</p>' +
         '<div class="btns"><button type="submit">Plantar y convocar</button><button type="button" class="ghost" id="plantNo">Cancelar</button></div></form>';
     } else {
       h += '<button type="button" class="plant" id="plantSi">+ Plantar un árbol nuevo</button>';
@@ -963,21 +961,23 @@ function todosArboles() {
   var icon = wmMini(24);
   return '<details class="otros"' + (OTROS ? ' open' : '') + '><summary><span class="oicon">' + icon + '</span><span class="otit">Árboles de la red</span><span class="ocount">' + lista.length + '</span></summary>' +
     '<div class="obody"><p class="small muted">Todos los árboles están a la vista: al tocar uno se ven su mapa y su gente.</p>' +
-    (lista.length > 1 ? '<div class="search"><input id="tq" type="search" placeholder="Buscar un árbol" autocomplete="off" aria-label="Buscar un árbol por nombre, tipo o lugar"></div>' : '') +
+    (lista.length > 1 ? '<div class="search"><input id="tq" type="search" placeholder="Buscar un árbol" autocomplete="off" aria-label="Buscar un árbol por tema o lugar"></div>' : '') +
     '<div class="tlist" id="tlistAll">' +
-    lista.map(function (t) { return '<div class="titem" data-q="' + esc(normTxt([t.nombre, t.tipo, t.desc].join(' '))) + '">' + tcardHtml(t, false) + '</div>'; }).join('') +
-    '</div><p class="small muted" id="tqNone" hidden>No hay ningún árbol con ese nombre.</p></div></details>';
+    lista.map(function (t) { return '<div class="titem" data-q="' + esc(normTxt([t.titulo, t.tipo, t.desc].join(' '))) + '">' + tcardHtml(t, false) + '</div>'; }).join('') +
+    '</div><p class="small muted" id="tqNone" hidden>No hay ningún árbol con ese tema.</p></div></details>';
 }
 // Pedir sumarse al árbol que se está mirando (para quien no está en él).
 function sumarCard() {
   if (!S.arbol) return '';
   if (S.miPedido) return '<div class="card sumar"><p class="small">Tu pedido para sumarte a este árbol ya llegó a su persona 1, que coordina en qué posición te sumarías.</p></div>';
   if (!S.puedoPedir) return '';
+  // Quien tiene una convocatoria pendiente a este árbol no necesita pedir sumarse.
+  if (S.invitacion && S.invitacion.estado === 'Convocada' && S.invitacion.arbol === S.arbol.id) return '';
   if (!SUMAR) return '<button type="button" class="ghost sumarbtn" id="sumarSi">Quiero sumarme a este árbol</button>';
   var h = '<form id="sumarForm" class="card sumar" style="gap:10px"><h2>Quiero sumarme</h2><p class="small muted">La persona 1 del árbol recibe el pedido y coordina en qué posición te sumarías.</p>';
   if (!S.yo) h += '<label>Tu nombre<input id="sNombre" autocomplete="name" required maxlength="60"></label>' +
     '<label>Correo<input id="sCorreo" type="email" autocomplete="email" required></label>' +
-    '<label>Lo que importa <span class="small muted" style="font-weight:400">Al menos una palabra, luego se puede cambiar o ampliar. Puede ser un tema, una canción, una película, un lugar, etc.</span><input id="sTema" maxlength="120" required></label>';
+    '<label>Lo que importa <span class="small muted" style="font-weight:400">Al menos una palabra, luego se puede cambiar o ampliar. Puede ser cualquier tema: una idea, una causa, un lugar…</span><input id="sLoQueImporta" maxlength="120" required></label>';
   h += '<label>Mensaje <span class="small muted" style="font-weight:400">Opcional: por qué te interesa este árbol.</span><textarea id="sMsg" maxlength="400" rows="3"></textarea></label>';
   if (!S.yo) h += '<p class="small muted">Te mandamos un correo para confirmar el pedido.</p>';
   return h + '<div class="btns"><button type="submit">Enviar el pedido</button><button type="button" class="ghost" id="sumarNo">Cancelar</button></div></form>';
@@ -989,7 +989,7 @@ function pedidosCard() {
   var h = '<div class="card pedidos"><h2>Quieren sumarse <small class="muted" style="font-weight:500">' + ps.length + '</small></h2>';
   h += ps.map(function (q) {
     var r = '<div class="ped"><div class="pedh"><b>' + esc(q.nombre) + '</b><span class="small muted">' + esc(q.fecha) + '</span></div>' +
-      '<span class="small">Lo que importa: <b>' + esc(q.tema) + '</b></span>' + (q.mensaje ? '<p class="small pedmsg">«' + esc(q.mensaje) + '»</p>' : '');
+      '<span class="small">Lo que importa: <b>' + esc(q.loQueImporta) + '</b></span>' + (q.mensaje ? '<p class="small pedmsg">«' + esc(q.mensaje) + '»</p>' : '');
     if (q.estado === 'Asignada') {
       r += '<span class="small muted">Propuesto para la posición ' + esc(q.lugar) + ', en la tríada de ' + esc(q.asignadoNombre || 'P' + q.asignado) + '.</span>';
       if (q.soyAsignada) r += '<div class="btns"><button type="button" data-pedinv="' + esc(q.id) + '">Convocar a la posición ' + esc(q.lugar) + '</button><button type="button" class="ghost" data-peddev="' + esc(q.id) + '">No puedo</button></div>';
@@ -1006,34 +1006,33 @@ function pedidosCard() {
 }
 function temaCard() {
   var a = S.arbol; if (!a || a.acordado) return '';
-  var h = '<div class="card tema"><h2>Acordar el nombre del árbol</h2><p class="small muted">Como propuesta inicial, se toma lo que dice en Lo que importa.</p>';
+  var h = '<div class="card tema"><h2>Acordar el tema del árbol</h2><p class="small muted">El tema es lo que importa a quienes forman el árbol.</p>';
   var mine = a.soySemilla && S.me ? S.me.pos : '';
   if (a.prop && !PROP) {
-    h += '<div class="prop"><span class="small muted">Propuesta de ' + esc(a.prop.deNombre || 'P' + a.prop.de) + '</span><b class="n">' + esc(a.prop.nombre) + '</b><span><span class="tag">' + esc(a.prop.tipo) + '</span></span>' + (a.prop.desc ? '<p class="small">Lugar: ' + esc(a.prop.desc) + '</p>' : '') + '</div>';
+    h += '<div class="prop"><span class="small muted">Propuesta de ' + esc(a.prop.deNombre || 'P' + a.prop.de) + '</span><b class="n">' + esc(a.prop.tema) + '</b><span><span class="tag">' + esc(a.prop.tipo) + '</span></span>' + (a.prop.desc ? '<p class="small">Lugar: ' + esc(a.prop.desc) + '</p>' : '') + '</div>';
   }
   var form = mine && (PROP || !a.prop);
   h += '<div class="seedst">' + a.semilla.map(function (p) {
-    var yo = p.pos === mine, imp = (S.temas && S.temas[p.pos]) || '', st;
+    var yo = p.pos === mine, imp = (S.loQueImporta && S.loQueImporta[p.pos]) || '', st;
     if (!p.activa) st = '<span class="muted">todavía no entró</span>';
     else if (a.prop && !PROP) st = '<span class="' + (p.acuerda ? 'ok' : 'muted') + '">' + (p.acuerda ? (a.prop.de === p.pos ? 'propuso' : 'de acuerdo') : (yo ? 'falta tu respuesta' : 'falta su respuesta')) + '</span>';
-    // sin propuesta: lo que cada persona puso en Lo que importa es su propuesta inicial
-    else st = imp ? (form ? '<button type="button" class="xlink" data-usar="' + esc(imp) + '" title="Usar como nombre">' + esc(imp) + '</button>' : '<b>' + esc(imp) + '</b>') : '';
+    // sin propuesta: se ve lo que importa a cada persona, como contexto (el tema se acuerda de cero)
+    else st = imp ? '<b>' + esc(imp) + '</b>' : '';
     return '<div><span>' + (p.activa ? esc(p.nombre) + (yo ? ' (vos)' : '') : 'Posición ' + p.pos) + '</span>' + st + '</div>';
   }).join('') + '</div>';
   if (!mine) {
-    if (S.yo) h += '<p class="small muted">El nombre lo acuerdan las tres personas de la semilla.</p>';
+    if (S.yo) h += '<p class="small muted">El tema lo acuerdan las tres personas de la semilla.</p>';
     return h + '</div>';
   }
   if (form) {
-    var inicial = (S.temas && S.temas[mine]) || '';
     h += '<form id="temaForm" style="display:grid;gap:10px">' +
-      '<label>Nombre del árbol<input id="tNombre" maxlength="60" required value="' + esc(inicial) + '"></label>' +
+      '<label>Tema del árbol<input id="tTema" maxlength="60" required></label>' +
       '<fieldset style="border:0;padding:0;margin:0"><legend style="font-size:13px;font-weight:700;padding:0">Tipo</legend><div class="radios"><label><input type="radio" name="tTipo" value="Temático" required> Temático</label><label><input type="radio" name="tTipo" value="Geográfico"> Geográfico</label></div></fieldset>' +
       '<label id="lugarBox" hidden>Si es geográfico, ¿de qué lugar es?<input id="tLugar" maxlength="240"></label>' +
-      '<div class="btns"><button type="submit">Proponer este nombre</button>' + (a.prop ? '<button type="button" class="ghost" id="temaNo">Cancelar</button>' : '') + '</div></form>';
+      '<div class="btns"><button type="submit">Proponer este tema</button>' + (a.prop ? '<button type="button" class="ghost" id="temaNo">Cancelar</button>' : '') + '</div></form>';
   } else {
     var yaAcuerdo = a.semilla.some(function (p) { return p.pos === mine && p.acuerda; });
-    h += '<div class="btns">' + (yaAcuerdo ? '' : '<button type="button" id="temaOk">Estoy de acuerdo</button>') + '<button type="button" class="ghost" id="temaOtro">Propongo otro nombre</button></div>';
+    h += '<div class="btns">' + (yaAcuerdo ? '' : '<button type="button" id="temaOk">Estoy de acuerdo</button>') + '<button type="button" class="ghost" id="temaOtro">Propongo otro tema</button></div>';
   }
   return h + '</div>';
 }
@@ -1047,7 +1046,7 @@ function render() {
   M = mapData();
   var visita = modoVisita(), corto = visita && VISTA !== 'red';
   var h = '<div class="top"><button type="button" class="brand" id="irInicio" aria-label="Ir al inicio">' + wmMini(24) + wordmark() + '</button>';
-  h += '<span class="topr">' + temaBtn() + (S.yo ? '<button class="link small" style="color:var(--ink)" data-perfil="1">Mi perfil</button><button class="chip" id="logout">' + esc(S.yo.nombre || S.yo.correo) + ' · salir</button>' : '') + '</span>';
+  h += '<span class="topr">' + modoBtn() + (S.yo ? '<button class="link small" style="color:var(--ink)" data-perfil="1">Mi perfil</button><button class="chip" id="logout">' + esc(S.yo.nombre || S.yo.correo) + ' · salir</button>' : '') + '</span>';
   h += '</div>';
   if (visita) {
     if (VISTA === 'inicio') h += heroHtml() + puertasHtml();
@@ -1064,7 +1063,7 @@ function render() {
   if (PERFIL && S.yo) {
     h += '<div class="card"><h2>Mi perfil</h2><form id="perfilForm" style="display:grid;gap:10px">' +
       '<label>Nombre <span class="small muted" style="font-weight:400">Así te ve el resto de la red, en todos tus árboles.</span><input id="pNombre" value="' + esc(S.yo.nombre || '') + '" required maxlength="60" autocomplete="name"></label>' +
-      '<label>Lo que importa <span class="small muted" style="font-weight:400">Al menos una palabra, luego se puede cambiar o ampliar. Puede ser un tema, una canción, una película, un lugar, etc.</span><input id="pTema" value="' + esc(S.yo.tema || '') + '" required maxlength="120"></label>' +
+      '<label>Lo que importa <span class="small muted" style="font-weight:400">Al menos una palabra, luego se puede cambiar o ampliar. Puede ser cualquier tema: una idea, una causa, un lugar…</span><input id="pLoQueImporta" value="' + esc(S.yo.loQueImporta || '') + '" required maxlength="120"></label>' +
       '<p class="small muted" style="margin:0">' + (S.me ? 'En este árbol estás en la posición ' + esc(S.me.pos) + ' · ' : '') + esc(S.yo.correo) + ' (tu correo no lo ve nadie más)</p>' +
       '<div style="display:flex;gap:8px"><button type="submit">Guardar</button><button type="button" class="ghost" id="perfilCerrar">Cerrar</button></div></form></div>';
   } else if (RENAME && S.yo) {
@@ -1091,7 +1090,7 @@ function render() {
   bind();
 }
 function bind() {
-  var tb = $('#tema'); if (tb) tb.onclick = function () { TEMA = temaOscuro() ? 'claro' : 'oscuro'; lsSet('wm_tema', TEMA); aplicarTema(); var x = document.createElement('div'); x.innerHTML = temaBtn(); tb.replaceWith(x.firstChild); bind(); };
+  var tb = $('#modo'); if (tb) tb.onclick = function () { MODO = modoOscuro() ? 'claro' : 'oscuro'; lsSet('wm_modo', MODO); aplicarModo(); var x = document.createElement('div'); x.innerHTML = modoBtn(); tb.replaceWith(x.firstChild); bind(); };
   var hl = $('#heroLogo'); if (hl) hl.onclick = function () { heroPlay(); };
   Array.prototype.forEach.call(document.querySelectorAll('[data-ir]'), function (b) { b.onclick = function () { irA(b.getAttribute('data-ir')); }; });
   var ii = $('#irInicio'); if (ii) ii.onclick = function () { irA('inicio'); };
@@ -1101,7 +1100,7 @@ function bind() {
   var af = $('#acceptForm');
   if (af) af.onsubmit = function (e) {
     e.preventDefault(); if (BUSY) return; busy(true);
-    call('aceptarInvitacion', INV, $('#nameIn') ? $('#nameIn').value : '', $('#temaIn') ? $('#temaIn').value : '').then(function (res) {
+    call('aceptarInvitacion', INV, $('#nameIn') ? $('#nameIn').value : '', $('#loQueImportaIn') ? $('#loQueImportaIn').value : '').then(function (res) {
       busy(false); TOKEN = res.token; lsSet('wm_red_token', TOKEN); INV = ''; if (res.arbol) ARBOL = res.arbol;
       return load().then(function () { if (S.me) toast('Listo, ya estás en el árbol.'); });
     }).catch(function (err) { busy(false); toast(errMsg(err), true); });
@@ -1117,7 +1116,7 @@ function bind() {
   var af = $('#accForm');
   if (af) af.onsubmit = function (e) {
     e.preventDefault(); if (BUSY) return; busy(true);
-    call('entrarConEnlace', ACC, $('#nameIn').value, $('#temaIn').value).then(function (res) {
+    call('entrarConEnlace', ACC, $('#nameIn').value, $('#loQueImportaIn').value).then(function (res) {
       busy(false); lsSet('wm_acc_used', ACC); ACCN = null;
       if (TOKEN && TOKEN !== res.token) call('cerrarSesion', TOKEN).catch(function () {});
       TOKEN = res.token; lsSet('wm_red_token', TOKEN); LOGIN = null; INV = ''; if (res.arbol) ARBOL = res.arbol;
@@ -1127,9 +1126,9 @@ function bind() {
   var cf = $('#codeForm');
   if (cf) cf.onsubmit = function (e) {
     e.preventDefault(); if (BUSY) return;
-    var code = $('#codeIn').value, name = $('#nameIn') ? $('#nameIn').value : '', tema = $('#temaIn') ? $('#temaIn').value : '';
+    var code = $('#codeIn').value, name = $('#nameIn') ? $('#nameIn').value : '', loQueImporta = $('#loQueImportaIn') ? $('#loQueImportaIn').value : '';
     busy(true);
-    call('verificarCodigo', LOGIN.correo, code, name, tema).then(function (res) {
+    call('verificarCodigo', LOGIN.correo, code, name, loQueImporta).then(function (res) {
       busy(false); TOKEN = res.token; lsSet('wm_red_token', TOKEN); LOGIN = null; PROPIO = true; if (res.arbol && !ARBOL) ARBOL = res.arbol;
       return load().then(function () { if (S.yo) toast('Hola, ' + (S.yo.nombre || '').split(' ')[0]); });
     }).catch(function (err) { busy(false); toast(errMsg(err), true); });
@@ -1140,12 +1139,12 @@ function bind() {
   Array.prototype.forEach.call(document.querySelectorAll('[data-gomap]'), function (b) { b.onclick = function () { goMap(b.getAttribute('data-gomap')); }; });
   Array.prototype.forEach.call(document.querySelectorAll('[data-golist]'), function (b) { b.onclick = function () { goList(b.getAttribute('data-golist')); }; });
   Array.prototype.forEach.call(document.querySelectorAll('[data-rename]'), function (b) { b.onclick = function () { RENAME = b.getAttribute('data-rename'); PERFIL = false; render(); var i = $('#renameIn'); if (i) { i.focus(); i.select(); window.scrollTo(0, 0); } }; });
-  Array.prototype.forEach.call(document.querySelectorAll('[data-perfil]'), function (b) { b.onclick = function () { PERFIL = true; RENAME = null; render(); window.scrollTo(0, 0); var i = $('#pTema'); if (i && !i.value) i.focus(); }; });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-perfil]'), function (b) { b.onclick = function () { PERFIL = true; RENAME = null; render(); window.scrollTo(0, 0); var i = $('#pLoQueImporta'); if (i && !i.value) i.focus(); }; });
   var pc = $('#perfilCerrar'); if (pc) pc.onclick = function () { PERFIL = false; render(); };
   var pf = $('#perfilForm');
   if (pf) pf.onsubmit = function (e) {
     e.preventDefault(); if (BUSY) return; busy(true);
-    call('cambiarPerfil', TOKEN, $('#pNombre').value, $('#pTema').value).then(function () { busy(false); PERFIL = false; LAST_STATE = ''; toast('Perfil guardado'); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); });
+    call('cambiarPerfil', TOKEN, $('#pNombre').value, $('#pLoQueImporta').value).then(function () { busy(false); PERFIL = false; LAST_STATE = ''; toast('Perfil guardado'); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); });
   };
   var rf = $('#renameForm');
   if (rf) rf.onsubmit = function (e) {
@@ -1192,7 +1191,7 @@ function bind() {
   if (sf) sf.onsubmit = function (e) {
     e.preventDefault(); if (BUSY) return; busy(true);
     var v = function (id) { var x = $(id); return x ? x.value : ''; };
-    call('pedirSumarme', TOKEN, ARBOL, v('#sNombre'), v('#sCorreo'), v('#sTema'), v('#sMsg')).then(function (res) {
+    call('pedirSumarme', TOKEN, ARBOL, v('#sNombre'), v('#sCorreo'), v('#sLoQueImporta'), v('#sMsg')).then(function (res) {
       busy(false); SUMAR = false; LAST_STATE = '';
       toast(res.confirmar ? 'Te mandamos un correo: con su botón se confirma el pedido.' : 'Listo: el pedido llegó a la persona 1 del árbol.');
       return load();
@@ -1235,18 +1234,17 @@ function bind() {
     e.preventDefault(); if (BUSY) return;
     var tipo = document.querySelector('input[name="tTipo"]:checked');
     busy(true);
-    call('proponerTema', TOKEN, ARBOL, $('#tNombre').value, tipo ? tipo.value : '', $('#tLugar').value).then(function (res) { busy(false); PROP = false; LAST_STATE = ''; toast(res.acordado ? '¡Nombre acordado!' : 'Propuesta enviada. Falta que las otras personas de la semilla estén de acuerdo.'); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); });
+    call('proponerTema', TOKEN, ARBOL, $('#tTema').value, tipo ? tipo.value : '', $('#tLugar').value).then(function (res) { busy(false); PROP = false; LAST_STATE = ''; toast(res.acordado ? '¡Tema acordado!' : 'Propuesta enviada. Falta que las otras personas de la semilla estén de acuerdo.'); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); });
   };
   Array.prototype.forEach.call(document.querySelectorAll('input[name="tTipo"]'), function (r) {
     r.onchange = function () { var geo = r.value === 'Geográfico' && r.checked, box = $('#lugarBox'), li = $('#tLugar'); if (box) box.hidden = !geo; if (li) { li.required = geo; if (geo) li.focus(); } };
   });
-  Array.prototype.forEach.call(document.querySelectorAll('[data-usar]'), function (b) { b.onclick = function () { var n = $('#tNombre'); if (n) { n.value = b.getAttribute('data-usar'); n.focus(); } }; });
 
   var tno = $('#temaNo'); if (tno) tno.onclick = function () { PROP = false; render(); };
-  var tot = $('#temaOtro'); if (tot) tot.onclick = function () { PROP = true; render(); var i = $('#tNombre'); if (i) i.focus(); };
+  var tot = $('#temaOtro'); if (tot) tot.onclick = function () { PROP = true; render(); var i = $('#tTema'); if (i) i.focus(); };
   var tok = $('#temaOk'); if (tok) tok.onclick = function () {
     if (BUSY) return; busy(true);
-    call('acordarTema', TOKEN, ARBOL).then(function (res) { busy(false); LAST_STATE = ''; toast(res.acordado ? '¡Nombre acordado! Ya se pueden abrir las tríadas siguientes.' : 'Listo, quedó registrado tu acuerdo.'); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); });
+    call('acordarTema', TOKEN, ARBOL).then(function (res) { busy(false); LAST_STATE = ''; toast(res.acordado ? '¡Tema acordado! Ya se pueden abrir las tríadas siguientes.' : 'Listo, quedó registrado tu acuerdo.'); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); });
   };
   Array.prototype.forEach.call(document.querySelectorAll('[data-resend]'), function (b) {
     b.onclick = function () { if (BUSY) return; busy(true); call('reenviarInvitacion', TOKEN, ARBOL, b.getAttribute('data-resend')).then(function () { busy(false); toast('Convocatoria reenviada'); }).catch(function (err) { busy(false); toast(errMsg(err), true); }); };

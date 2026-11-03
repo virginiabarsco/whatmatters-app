@@ -31,11 +31,30 @@ Para retomar el trabajo en una conversación nueva. Última actualización: 3 de
 - **Pendiente:** ejecutar `ordenarPlanilla` desde el editor para reescribir la hoja "Cómo se juega". Se decidió hacerlo **después del bloque 2**, para no hacerlo dos veces; la hoja todavía muestra el texto viejo (lema "entrena", "invitación"). Antes, repasar con Opus el texto de la hoja: hay filas que contradicen reglas del bloque 2 (Árbol, Tríadas siguientes, Nombre del árbol/tipo, vencimiento de convocatorias), "Alcance" usa la palabra "nivel", faltan los estados de posición, el estado del árbol dice "tema" en vez de "nombre", y conviene separar lo del juego de lo de las pestañas. En el editor el selector de funciones sí respondió esta vez: se abre, se baja la lista y se elige la función.
 - Regla de texto: todo con mayúscula inicial en etiquetas y leyendas. La regla 1 del texto de bienvenida ("Se requiere una invitación para empezar") se deja como está.
 
+## Cambios listos sin publicar (bloque 1b, en la copia local)
+
+Acordados el 3 nov 2026 y probados en el simulador (regresión sin errores):
+
+1. Correo de convocatoria: "X te convocó a su tríada semilla de un árbol nuevo de WhatMatters, en la posición N." + "El tema de este árbol lo acuerdan las tres personas de la semilla." / con tema: "X te convocó a su tríada del árbol «T» de WhatMatters, en la posición N." Después: "Con el botón podés ver la convocatoria." Se sacaron "Si es tu primera vez…" y "Este enlace es personal…".
+2. Página de aceptar: título "X te convocó a su tríada"; párrafo "Es la tríada semilla de un árbol nuevo de WhatMatters. Vas a ocupar la posición N con el correo C. El tema de este árbol lo acuerdan las tres personas de la semilla." Si ya está en otro árbol: "Ya estás en otro árbol, así que entrás con los mismos datos que ya están en tu perfil."
+3. Ya no aparece "Quiero sumarme a este árbol" cuando hay una convocatoria pendiente a ese árbol.
+4. Árbol: **tema** en lugar de nombre en toda la app (inventario de 21 puntos aprobado). Acordar el tema es **de cero**: sin propuesta inicial, campo vacío, lo que importa a cada persona de la semilla se ve como texto. Debajo del título de la tarjeta: "El tema es lo que importa a quienes forman el árbol."
+5. Ayuda de Lo que importa: "Al menos una palabra, luego se puede cambiar o ampliar. Puede ser cualquier tema: una idea, una causa, un lugar…"
+6. "Ver cómo funciona": la puerta se queda, pero solo muestra "Este espacio está en proceso de redacción. Las dudas y los comentarios son bienvenidos por correo a whatmatters.pro@gmail.com." El texto anterior (reglas, semilla, avisos de privacidad) queda para revisar junto con la hoja "Cómo se juega".
+7. Planilla: columnas de Árboles "Nombre" → "Tema" y "Propuesta: nombre" → "Propuesta: tema". **Después de publicar, ejecutar migrarConvocadas desde el editor** (hace las dos migraciones; se puede repetir).
+8. Código: etiquetas internas acordes al vocabulario: el árbol tiene `tema` (y `titulo` para lo que se muestra, que puede ser "Semilla de…"), la persona `loQueImporta`, la convocatoria `arbolTema`; el modo claro/oscuro se llama `modo`.
+
+Pendientes nuevos:
+- Frase que explique que el botón del correo entra sin clave (por ahora no va ninguna).
+- **Cambiar el tema de un árbol** (bloque futuro): quién propone, qué umbral (probablemente decisión estructural: dos tercios, persona por persona) y el fork para quien no esté de acuerdo.
+- Revisar el texto de "Cómo funciona" y de la hoja "Cómo se juega" como una sola fuente (versión corta y larga).
+
 ## Vocabulario acordado
 
 - **Posición** (nunca "lugar" para una posición). Estados: **Ocupada**, **Convocada**, **Por convocar**. No se usa "libre" ni "vacía".
 - **Alcance:** **En proceso** o **Completo**.
 - **Convocar** en todos lados (acción y estado), también en correos y en la planilla.
+- **Tema del árbol** = lo que importa a quienes forman el árbol (lo acuerdan las tres personas de la semilla). El árbol no tiene "nombre": el nombre es de la persona. **Lo que importa** = el tema de cada persona.
 - **Lugar** = geográfico (lugar del árbol, ciudad, lugar que te gusta). No "zona".
 - **Semilla** = alcance 1. **Árbol** = desde que hay al menos una persona en el alcance 2. La semilla pasa a llamarse **tríada base del tronco** cuando se completa el alcance 2.
 - Lema: "Un juego serio y emocionante que recompensa nuestra habilidad para ponernos de acuerdo en lo importante." (en compu dos renglones, corte después de "habilidad"; en celular cuatro: "Un juego serio y emocionante / que recompensa nuestra habilidad / para ponernos de acuerdo / en lo importante."). Es una intención del juego, no una promesa inmediata.
@@ -54,6 +73,7 @@ Para retomar el trabajo en una conversación nueva. Última actualización: 3 de
 
 ## Bloque 2 · reglas del juego (acordado, sin implementar; hacerlo en una conversación nueva con Opus)
 
+0. Con el cambio a tema: "el freno del nombre" pasa a ser **el freno del tema**, y "acordar el nombre pide nombre y lugar" pasa a **tema y lugar**.
 1. **Convocar sin esperar:** cada persona puede llenar su propia tríada del alcance siguiente apenas entra, sin esperar a que se complete la tríada por la que entró.
    - Se mantiene el **freno del nombre**: hasta que la semilla acuerda el nombre no se abren tríadas siguientes.
    - **Límite de tres alcances:** el alcance N se abre solo si el alcance N−3 está completo (el 4 necesita el 1 completo; el 5, el 2; etc.). Con el freno del nombre, el primer límite que frena de verdad es el 5.
