@@ -1,13 +1,13 @@
 // WhatMatters: árboles que crecen de a tres.
-// Cada árbol nace de una semilla (posiciones 1, 2 y 3) y crece por invitación. Una persona puede estar en hasta tres árboles.
+// Cada árbol nace de una semilla (posiciones 1, 2 y 3) y crece por convocatoria. Una persona puede estar en hasta tres árboles.
 // Los datos viven en las pestañas "Personas" (una fila por persona y árbol) y "Árboles" de esta planilla.
 
 var SHEET = 'Personas';
 var SHEET_ARB = 'Árboles';
 var MAX_ALCANCE = 10;
 var MAX_ARBOLES = 3;
-var COLS = 10; // Posición, Alcance de entrada, Nombre, Correo, Invitó, Estado, Fecha de invitación, Fecha de entrada, Lo que importa, Árbol
-var HEAD = ['Posición', 'Alcance de entrada', 'Nombre', 'Correo', 'Invitó (posición)', 'Estado', 'Fecha de invitación', 'Fecha de entrada', 'Lo que importa', 'Árbol'];
+var COLS = 10; // Posición, Alcance de entrada, Nombre, Correo, Convocó, Estado, Fecha de convocatoria, Fecha de entrada, Lo que importa, Árbol
+var HEAD = ['Posición', 'Alcance de entrada', 'Nombre', 'Correo', 'Convocó (posición)', 'Estado', 'Fecha de convocatoria', 'Fecha de entrada', 'Lo que importa', 'Árbol'];
 var FORMATS = [['@', '0', '@', '@', '@', '@', 'dd/mm/yyyy', 'dd/mm/yyyy', '@', '@']];
 var ACOLS = 13;
 var AHEAD = ['Árbol', 'Nombre', 'Tipo', 'Lugar (si es geográfico)', 'Estado', 'Plantó (correo)', 'Fecha', 'Propuesta: nombre', 'Propuesta: tipo', 'Propuesta: lugar', 'Propuso (posición)', 'De acuerdo (posiciones)', 'Fecha del acuerdo'];
@@ -110,10 +110,12 @@ function readAll_() {
   if (n < 1) return [];
   return s.getRange(2, 1, n, COLS).getValues().map(function (r, i) {
     return { row: i + 2, pos: String(r[0]), alcance: Number(r[1]) || depth_(r[0]), nombre: clean_(r[2], 60), correo: normMail_(r[3]),
-      invito: String(r[4] || ''), estado: clean_(r[5]) || 'Invitada', fInv: fmtDate_(r[6]), fEnt: fmtDate_(r[7]), tema: cleanTema_(r[8]),
+      invito: String(r[4] || ''), estado: legado_(clean_(r[5])) || 'Convocada', fInv: fmtDate_(r[6]), fEnt: fmtDate_(r[7]), tema: cleanTema_(r[8]),
       arbol: String(r[9] || 't1'), ent: Object.prototype.toString.call(r[7]) === '[object Date]' ? r[7].getTime() : 0 };
   }).filter(function (p) { return p.pos && p.pos !== 'undefined'; });
 }
+// Durante la migración la hoja puede traer todavía 'Convocada': se lee como 'Convocada'.
+function legado_(e) { return e === 'Invitada' ? 'Convocada' : e; }
 function readTrees_() {
   var a = sheetArb_();
   if (!a) return [];
@@ -184,8 +186,8 @@ function trianglesOf_(person, map) {
     var abierto = a === 1 || a === person.alcance + 1 ? true : complete_(map, triangleOf_(slotAt_(person, a - 1)));
     var lugares = slots.map(function (s, i) {
       var o = occupant_(map, s);
-      return { pos: s, propio: i === 0, nombre: o ? (o.nombre || '') : '', estado: o ? o.estado : 'Libre',
-        correo: (o && i > 0 && o.estado === 'Invitada' && o.invito === person.pos) ? o.correo : '' };
+      return { pos: s, propio: i === 0, nombre: o ? (o.nombre || '') : '', estado: o ? o.estado : 'Por convocar',
+        correo: (o && i > 0 && o.estado === 'Convocada' && o.invito === person.pos) ? o.correo : '' };
     });
     out.push({ alcance: a, abierto: abierto, lugares: lugares });
     // El alcance 1 (la semilla) no es solo suya: su falta de completitud no debe bloquear que arranque su propio triángulo siguiente.
@@ -221,8 +223,8 @@ function buildState_(correo, arbolPedido) {
   var me = mine ? { pos: mine.pos, nombre: mine.nombre, correo: mine.correo, estado: mine.estado, tema: mine.tema, admin: admin } : null;
   function lugar(slot, owner, base) {
     var o = occupant_(map, slot);
-    var l = { pos: slot, pid: o ? o.pos : '', nombre: o ? o.nombre : '', estado: o ? o.estado : 'Libre', yo: !!(me && o && o.pos === me.pos) };
-    if (o && o.estado === 'Invitada' && me && me.estado === 'Activa' && o.invito === me.pos) { l.correo = o.correo; l.mia = true; }
+    var l = { pos: slot, pid: o ? o.pos : '', nombre: o ? o.nombre : '', estado: o ? o.estado : 'Por convocar', yo: !!(me && o && o.pos === me.pos) };
+    if (o && o.estado === 'Convocada' && me && me.estado === 'Activa' && o.invito === me.pos) { l.correo = o.correo; l.mia = true; }
     if (!o && me && me.estado === 'Activa' && owner && owner.pos === me.pos && (base === '' || !cerrado)) l.puedoInvitar = true;
     return l;
   }
@@ -272,7 +274,7 @@ function buildState_(correo, arbolPedido) {
   } else {
     trees.forEach(function (t) { var s = treeSummary_(t, peopleOf_(all, t.id)); s.ajeno = true; arboles.push(s); });
   }
-  // Quieren sumarse: los pedidos vigentes de este árbol (sin correos) y, para la persona 1, los lugares libres donde se puede invitar.
+  // Quieren sumarse: los pedidos vigentes de este árbol (sin correos) y, para la persona 1, los posiciones por convocar donde se puede convocar.
   var pedidos = [], libres = [], puedoPedir = false, miPedido = false;
   if (pick) {
     var soyP1 = !!(me && me.estado === 'Activa' && me.pos === '1');
@@ -348,11 +350,11 @@ function getState(token, inv, arbol) {
   if (inv) {
     var all = readAll_(), trees = readTrees_();
     var p = info ? peopleOf_(all, info.arbol).filter(function (x) { return x.correo === info.correo; })[0] : null;
-    if (p && p.estado === 'Invitada') {
+    if (p && p.estado === 'Convocada') {
       var people = peopleOf_(all, info.arbol);
       var de = people.filter(function (x) { return x.pos === p.invito; })[0];
       var t = treeById_(trees, info.arbol);
-      st.invitacion = { correo: p.correo, pos: p.pos, estado: 'Invitada', de: de ? (de.nombre || '') : '', arbol: info.arbol,
+      st.invitacion = { correo: p.correo, pos: p.pos, estado: 'Convocada', de: de ? (de.nombre || '') : '', arbol: info.arbol,
         arbolNombre: t && t.acordado ? t.nombre : '', conocida: rowsOf_(all, p.correo).some(function (x) { return x.estado === 'Activa'; }) };
     } else st.invitacion = { estado: 'Usada', correo: p ? p.correo : (info ? info.correo : '') };
   }
@@ -403,9 +405,9 @@ function entrarConEnlace(acc, nombre, tema) {
     props.deleteProperty('acc_' + acc);
     return { token: issueToken_(d.correo), nombre: act.nombre, arbol: d.arbol || '' };
   }
-  if (!rows.length && all.length > 0) { props.deleteProperty('acc_' + acc); fail_('Este correo no tiene invitación.'); }
+  if (!rows.length && all.length > 0) { props.deleteProperty('acc_' + acc); fail_('Este correo no tiene convocatoria.'); }
   // Primera vez: falta el nombre. El enlace no se gasta hasta que lo escriba.
-  var primera = rows.filter(function (p) { return p.estado === 'Invitada'; })[0];
+  var primera = rows.filter(function (p) { return p.estado === 'Convocada'; })[0];
   nombre = clean_(nombre, 60); tema = cleanTema_(tema);
   if (!nombre && !tema) return { necesitaNombre: true, pos: primera ? primera.pos : '1', correo: d.correo };
   needNombreTema_(nombre, tema);
@@ -422,7 +424,7 @@ function ocuparLugar_(correo, nombre, tema) {
   var s = sheet_();
   var act = rows.filter(function (p) { return p.estado === 'Activa'; })[0];
   if (act) return { aviso: null, arbol: act.arbol };
-  var mine = rows.filter(function (p) { return p.estado === 'Invitada'; })[0];
+  var mine = rows.filter(function (p) { return p.estado === 'Convocada'; })[0];
   if (mine) {
     s.getRange(mine.row, 3).setValue(nombre);
     s.getRange(mine.row, 6).setValue('Activa');
@@ -440,11 +442,11 @@ function ocuparLugar_(correo, nombre, tema) {
     s.getRange(2, 1, 1, COLS).setValues([['1', 1, nombre, correo, '', 'Activa', new Date(), new Date(), tema, id]]);
     return { aviso: null, arbol: id };
   }
-  fail_('Este correo no tiene invitación.');
+  fail_('Este correo no tiene convocatoria.');
 }
 function avisoEntrada_(aviso) {
   sendMail_(aviso.to, aviso.nombre + ' entró a tu tríada en WhatMatters',
-    [escHtml_(aviso.nombre) + ' aceptó tu invitación y ocupa la posición ' + aviso.pos + ' de tu tríada.',
+    [escHtml_(aviso.nombre) + ' aceptó tu convocatoria y ocupa la posición ' + aviso.pos + ' de tu tríada.',
      '<span style="font-size:13px;color:#5C6B63">El botón te hace entrar con tu cuenta. Es personal: conviene no reenviar este correo.</span>'],
     'Ver el árbol', accessLink_(aviso.to, 0, aviso.arbol));
 }
@@ -453,16 +455,16 @@ function inviteLines_(de, pos, tree) {
   var donde = tree && tree.acordado && tree.nombre
     ? 'en el árbol «' + escHtml_(tree.nombre) + '» de WhatMatters'
     : 'en la semilla de un árbol nuevo de WhatMatters';
-  var lines = ['Hola:', escHtml_(de) + ' te invitó a sumarte a su tríada ' + donde + ', en la posición ' + pos + '.'];
+  var lines = ['Hola:', escHtml_(de) + ' te convocó a sumarte a su tríada ' + donde + ', en la posición ' + pos + '.'];
   if (!(tree && tree.acordado)) lines.push('El nombre de este árbol lo van a acordar entre las tres personas de la semilla.');
-  lines.push('Con el botón se acepta la invitación. Si es tu primera vez, vas a escribir tu nombre y lo que te importa. Este enlace es personal: conviene no reenviarlo.');
+  lines.push('Con el botón se acepta la convocatoria. Si es tu primera vez, vas a escribir tu nombre y lo que te importa. Este enlace es personal: conviene no reenviarlo.');
   return lines;
 }
 
 // Aceptar desde el enlace del correo: la llave prueba que la persona recibió la invitación.
 function aceptarInvitacion(inv, nombre, tema) {
   var info = inviteFrom_(inv);
-  if (!info) fail_('Esta invitación ya no es válida. Quien te invitó puede reenviártela.');
+  if (!info) fail_('Esta convocatoria ya no es válida. Quien te convocó puede reenviártela.');
   nombre = clean_(nombre, 60); tema = cleanTema_(tema);
   var aviso = withLock_(function () {
     var all = readAll_();
@@ -491,7 +493,7 @@ function aceptarEnApp(token, arbol) {
 function activar_(all, correo, arbol, nombre, tema) {
   var people = peopleOf_(all, arbol);
   var mine = people.filter(function (p) { return p.correo === correo; })[0];
-  if (!mine) fail_('Esta invitación fue cancelada.');
+  if (!mine) fail_('Esta convocatoria fue cancelada.');
   if (mine.estado === 'Activa') return null;
   var s = sheet_();
   s.getRange(mine.row, 3).setValue(nombre);
@@ -508,7 +510,7 @@ function pedirCodigo(correo) {
   if (!isMail_(correo)) fail_('El correo no es válido.');
   var all = readAll_();
   var rows = rowsOf_(all, correo);
-  if (!rows.length && all.length > 0) fail_('Este correo no tiene invitación. Para entrar, alguien que ya esté en un árbol tiene que invitarte con este correo.');
+  if (!rows.length && all.length > 0) fail_('Este correo no tiene convocatoria. Para entrar, alguien que ya esté en un árbol tiene que convocarte con este correo.');
   var cache = CacheService.getScriptCache();
   if (cache.get('wait_' + correo)) fail_('Ya te mandamos un código hace menos de un minuto. Puede estar en tu correo o en la carpeta de spam.');
   var code = String(Math.floor(100000 + Math.random() * 900000));
@@ -516,7 +518,7 @@ function pedirCodigo(correo) {
   cache.put('tries_' + correo, '0', 900);
   cache.put('wait_' + correo, '1', 60);
   var activa = rows.some(function (p) { return p.estado === 'Activa'; });
-  var primera = rows.filter(function (p) { return p.estado === 'Invitada'; })[0];
+  var primera = rows.filter(function (p) { return p.estado === 'Convocada'; })[0];
   var pos = primera ? primera.pos : '1';
   // El botón entra directo (o lleva a escribir el nombre la primera vez); el código sirve para otro dispositivo.
   sendMail_(correo, 'Tu acceso a WhatMatters',
@@ -557,7 +559,7 @@ function invitar(token, arbol, pos, correoInvitado) {
   arbol = String(arbol || '');
   var datos = withLock_(function () {
     correoInvitado = normMail_(correoInvitado); pos = String(pos);
-    if (!isMail_(correoInvitado)) fail_('El correo de la persona invitada no es válido.');
+    if (!isMail_(correoInvitado)) fail_('El correo de la persona convocada no es válido.');
     var all = readAll_(), trees = readTrees_();
     var tree = treeById_(trees, arbol);
     if (!tree) fail_('No encontramos ese árbol.');
@@ -574,14 +576,14 @@ function invitar(token, arbol, pos, correoInvitado) {
     var s = sheet_();
     var row = Math.max(s.getLastRow(), 1) + 1;
     s.getRange(row, 1, 1, COLS).setNumberFormats(FORMATS);
-    s.getRange(row, 1, 1, COLS).setValues([[pos, depth_(pos), '', correoInvitado, me.pos, 'Invitada', new Date(), '', '', arbol]]);
+    s.getRange(row, 1, 1, COLS).setValues([[pos, depth_(pos), '', correoInvitado, me.pos, 'Convocada', new Date(), '', '', arbol]]);
     return { de: me.nombre || me.correo, pos: pos, row: row, tree: tree };
   });
   try {
-    sendMail_(correoInvitado, datos.de + ' te invita a su tríada en WhatMatters', inviteLines_(datos.de, datos.pos, datos.tree), 'Ver la invitación', inviteLink_(correoInvitado, arbol));
+    sendMail_(correoInvitado, datos.de + ' te convoca a su tríada en WhatMatters', inviteLines_(datos.de, datos.pos, datos.tree), 'Ver la convocatoria', inviteLink_(correoInvitado, arbol));
   } catch (e) {
     withLock_(function () { sheet_().deleteRow(datos.row); });
-    fail_('No pudimos mandar el correo de invitación (' + (e && e.message ? e.message : e) + '). La invitación no se guardó.');
+    fail_('No pudimos mandar el correo de convocatoria (' + (e && e.message ? e.message : e) + '). La convocatoria no se guardó.');
   }
   return true;
 }
@@ -591,11 +593,11 @@ function reenviarInvitacion(token, arbol, pos) {
   var people = peopleOf_(readAll_(), arbol);
   var me = requireMeActive_(people, token);
   var target = people.filter(function (p) { return p.pos === String(pos); })[0];
-  if (!target || target.invito !== me.pos || target.estado !== 'Invitada') fail_('Solo podés reenviar invitaciones tuyas que todavía no se usaron.');
+  if (!target || target.invito !== me.pos || target.estado !== 'Convocada') fail_('Solo podés reenviar convocatorias tuyas que todavía no se usaron.');
   var cache = CacheService.getScriptCache();
-  if (cache.get('reinv_' + target.correo + arbol)) fail_('Ya reenviaste esta invitación hace poco. Se puede volver a intentar en unos minutos.');
+  if (cache.get('reinv_' + target.correo + arbol)) fail_('Ya reenviaste esta convocatoria hace poco. Se puede volver a intentar en unos minutos.');
   var tree = treeById_(readTrees_(), arbol);
-  sendMail_(target.correo, (me.nombre || me.correo) + ' te invita a su tríada en WhatMatters', inviteLines_(me.nombre || me.correo, target.pos, tree), 'Ver la invitación', inviteLink_(target.correo, arbol));
+  sendMail_(target.correo, (me.nombre || me.correo) + ' te convoca a su tríada en WhatMatters', inviteLines_(me.nombre || me.correo, target.pos, tree), 'Ver la convocatoria', inviteLink_(target.correo, arbol));
   cache.put('reinv_' + target.correo + arbol, '1', 300);
   return true;
 }
@@ -608,8 +610,8 @@ function cancelarInvitacion(token, arbol, pos) {
     var people = peopleOf_(all, arbol);
     var me = people.filter(function (p) { return p.correo === yo.correo && p.estado === 'Activa'; })[0];
     var target = people.filter(function (p) { return p.pos === String(pos); })[0];
-    var puede = target && target.estado === 'Invitada' && ((me && target.invito === me.pos) || yo.admin);
-    if (!puede) fail_('Solo podés cancelar invitaciones tuyas que todavía no se usaron.');
+    var puede = target && target.estado === 'Convocada' && ((me && target.invito === me.pos) || yo.admin);
+    if (!puede) fail_('Solo podés cancelar convocatorias tuyas que todavía no se usaron.');
     sheet_().deleteRow(target.row);
     dropInvites_(target.correo, arbol);
     return true;
@@ -627,7 +629,7 @@ function plantarArbol(token, correo2, correo3) {
     invitados.forEach(function (c, i) {
       if (!c) return;
       if (!isMail_(c)) fail_('El correo de la posición ' + (i + 2) + ' no es válido.');
-      if (c === yo.correo) fail_('No podés invitarte a vos misma o a vos mismo.');
+      if (c === yo.correo) fail_('No podés convocarte a vos misma o a vos mismo.');
       if (rowsOf_(all, c).length >= MAX_ARBOLES) fail_('La persona de la posición ' + (i + 2) + ' ya está en tres árboles, que es el máximo.');
     });
     if (invitados[0] && invitados[0] === invitados[1]) fail_('Los dos correos son iguales.');
@@ -711,7 +713,7 @@ function readPedidos_() {
   return s.getRange(2, 1, n, QCOLS).getValues().map(function (r, i) {
     var f = Object.prototype.toString.call(r[1]) === '[object Date]' ? r[1].getTime() : 0;
     return { row: i + 2, id: String(r[0]), fecha: f, fechaTxt: fmtDate_(r[1]), arbol: String(r[2]), nombre: clean_(r[3], 60), correo: normMail_(r[4]),
-      tema: cleanTema_(r[5]), mensaje: clean_(r[6], 400), estado: clean_(r[7]), lugar: String(r[8] || ''), asignado: String(r[9] || ''), clave: String(r[10] || '') };
+      tema: cleanTema_(r[5]), mensaje: clean_(r[6], 400), estado: legado_(clean_(r[7])), lugar: String(r[8] || ''), asignado: String(r[9] || ''), clave: String(r[10] || '') };
   }).filter(function (q) { return q.id; });
 }
 function pedidoVigente_(q) {
@@ -720,14 +722,14 @@ function pedidoVigente_(q) {
   if (q.estado === 'Pendiente' || q.estado === 'Asignada') return edad < DIAS_PEDIDO * 864e5;
   return false;
 }
-// Lugares libres del árbol donde ya se puede invitar, con la posición de quien invita en cada uno.
+// Posiciones por convocar del árbol donde ya se puede convocar, con la posición de quien convoca en cada una.
 function libresDe_(people, tree) {
   var map = index_(people), out = [], visto = {};
   people.filter(function (p) { return p.estado === 'Activa'; }).forEach(function (p) {
     trianglesOf_(p, map).forEach(function (t) {
       if (!t.abierto || (!tree.acordado && t.alcance > 1)) return;
       t.lugares.forEach(function (l, i) {
-        if (i === 0 || l.estado !== 'Libre' || visto[l.pos]) return;
+        if (i === 0 || l.estado !== 'Por convocar' || visto[l.pos]) return;
         visto[l.pos] = true; out.push({ pos: l.pos, dueno: p.pos, duenoNombre: p.nombre });
       });
     });
@@ -745,7 +747,7 @@ function avisoPedido_(q) {
   var lines = [escHtml_(q.nombre) + ' quiere sumarse a tu árbol «' + escHtml_(treeLabel_(tree, people)) + '».',
     'Lo que importa: <b>' + escHtml_(q.tema) + '</b>'];
   if (q.mensaje) lines.push('Su mensaje: «' + escHtml_(q.mensaje) + '»');
-  lines.push('Como persona 1 del árbol, decidís en qué posición se sumaría: puede ser una tuya, y la invitación sale en el momento, o la de otra persona del árbol, que recibe el aviso para invitarla.');
+  lines.push('Como persona 1 del árbol, decidís en qué posición se sumaría: puede ser una tuya, y la convocatoria sale en el momento, o la de otra persona del árbol, que recibe el aviso para convocarla.');
   sendMail_(p1.correo, q.nombre + ' quiere sumarse a tu árbol en WhatMatters', lines, 'Ver el pedido', accessLink_(p1.correo, 0, q.arbol));
 }
 function pedirSumarme(token, arbol, nombre, correo, tema, mensaje) {
@@ -763,7 +765,7 @@ function pedirSumarme(token, arbol, nombre, correo, tema, mensaje) {
       if (!isMail_(correo)) fail_('El correo no es válido.');
       needNombreTema_(nombre, tema);
     }
-    if (people.some(function (p) { return p.correo === correo; })) fail_('Ya estás en este árbol o tenés una invitación pendiente en él.');
+    if (people.some(function (p) { return p.correo === correo; })) fail_('Ya estás en este árbol o tenés una convocatoria pendiente en él.');
     if (rowsOf_(all, correo).length >= MAX_ARBOLES) fail_('Ya estás en tres árboles, que es el máximo.');
     if (readPedidos_().some(function (q) { return q.arbol === arbol && q.correo === correo && pedidoVigente_(q); })) fail_('Ya hay un pedido tuyo para sumarte a este árbol.');
     var cache = CacheService.getScriptCache();
@@ -809,21 +811,21 @@ function asignarPedido(token, id, lugar) {
     var me = requireMeActive_(people, token);
     if (me.pos !== '1') fail_('Los pedidos los coordina la persona 1 del árbol.');
     var l = libresDe_(people, tree).filter(function (x) { return x.pos === lugar; })[0];
-    if (!l) fail_('Esa posición no está libre para invitar.');
+    if (!l) fail_('Esa posición no está por convocar.');
     if (l.dueno !== '1') setPedido_(q, { estado: 'Asignada', lugar: lugar, asignado: l.dueno });
     var dueno = people.filter(function (p) { return p.pos === l.dueno; })[0];
     return { q: q, l: l, dueno: dueno, de: me.nombre, label: treeLabel_(tree, people) };
   });
   if (d.l.dueno === '1') {
     invitar(token, d.q.arbol, lugar, d.q.correo);
-    withLock_(function () { setPedido_(pedidoDe_(id), { estado: 'Invitada', lugar: lugar, asignado: '1', cierre: new Date() }); });
+    withLock_(function () { setPedido_(pedidoDe_(id), { estado: 'Convocada', lugar: lugar, asignado: '1', cierre: new Date() }); });
     return { invitada: true };
   }
   try {
     sendMail_(d.dueno.correo, d.q.nombre + ' quiere sumarse a tu tríada en WhatMatters',
       [escHtml_(d.de) + ', persona 1 del árbol «' + escHtml_(d.label) + '», propone que ' + escHtml_(d.q.nombre) + ' se sume en la posición ' + lugar + ' de tu tríada.',
        'Lo que importa: <b>' + escHtml_(d.q.tema) + '</b>' + (d.q.mensaje ? '<br>Su mensaje: «' + escHtml_(d.q.mensaje) + '»' : ''),
-       'En la app, junto al pedido, están las opciones para invitarla o para avisar que no podés.'],
+       'En la app, junto al pedido, están las opciones para convocarla o para avisar que no podés.'],
       'Ver el pedido', accessLink_(d.dueno.correo, 0, d.q.arbol));
   } catch (e) {}
   return { invitada: false, dueno: d.dueno ? d.dueno.nombre : '' };
@@ -836,7 +838,7 @@ function invitarPedido(token, id) {
     return q;
   });
   invitar(token, q.arbol, q.lugar, q.correo);
-  withLock_(function () { setPedido_(pedidoDe_(id), { estado: 'Invitada', cierre: new Date() }); });
+  withLock_(function () { setPedido_(pedidoDe_(id), { estado: 'Convocada', cierre: new Date() }); });
   return true;
 }
 function devolverPedido(token, id) {
@@ -935,10 +937,37 @@ function reiniciarRed() {
   Logger.log('Red reiniciada.');
 }
 
+// Migración de vocabulario: 'Invitada' pasa a 'Convocada' (Personas y Quieren sumarse) y se renombran dos cabeceras.
+// El código ya lee los dos valores, así que se puede ejecutar en cualquier momento. Es seguro repetirla.
+function migrarConvocadas_() {
+  withLock_(function () {
+    var s = sheet_();
+    if (s) {
+      var n = s.getLastRow() - 1;
+      if (n > 0) {
+        var col = s.getRange(2, 6, n, 1), vals = col.getValues();
+        if (vals.some(function (r) { return r[0] === 'Invitada'; })) col.setValues(vals.map(function (r) { return [legado_(r[0])]; }));
+      }
+      s.getRange(1, 5).setValue(HEAD[4]);
+      s.getRange(1, 7).setValue(HEAD[6]);
+    }
+    var q = SpreadsheetApp.getActive().getSheetByName(SHEET_SUM);
+    if (q) {
+      var m = q.getLastRow() - 1;
+      if (m > 0) {
+        var cq = q.getRange(2, 8, m, 1), vq = cq.getValues();
+        if (vq.some(function (r) { return r[0] === 'Invitada'; })) cq.setValues(vq.map(function (r) { return [legado_(r[0])]; }));
+      }
+    }
+  });
+}
+function migrarConvocadas() { soloAdministradora_(); migrarConvocadas_(); Logger.log('Migración hecha.'); }
+
 // Deja la planilla con lo que usa la app y reescribe "Cómo se juega". Se puede ejecutar de nuevo desde el editor cuando cambian las reglas.
 function ordenarPlanilla() {
   soloAdministradora_();
   ensureSetup_();
+  migrarConvocadas_();
   var ss = SpreadsheetApp.getActive();
   ['Propuesta', 'Árbol', 'Decisiones', 'Apoyos', 'RCE'].forEach(function (n) { var sh = ss.getSheetByName(n); if (sh) ss.deleteSheet(sh); });
   headerStyle_(sheetArb_().getRange(1, 1, 1, ACOLS).setValues([AHEAD]));
@@ -947,7 +976,7 @@ function ordenarPlanilla() {
   g.clear(); g.getRange('A:B').breakApart();
   var rows = [
     ['WhatMatters: cómo se juega', ''],
-    ['Un juego serio y emocionante que entrena nuestra habilidad para ponernos de acuerdo en lo importante.', ''],
+    ['Un juego serio y emocionante que recompensa nuestra habilidad para ponernos de acuerdo en lo importante.', ''],
     ['', ''],
     ['Reglas', ''],
     ['1', 'Se requiere una invitación para empezar y que te importe algún tema.'],
@@ -956,17 +985,17 @@ function ordenarPlanilla() {
     ['', ''],
     ['Cómo funciona hoy', ''],
     ['Tríada', 'Grupo de tres posiciones. La primera de cada árbol es la semilla: posiciones 1, 2 y 3.'],
-    ['Entrar', 'Solo con invitación por correo. La primera vez, cada persona escribe su nombre y lo que importa (al menos una palabra; se puede cambiar o ampliar después desde Mi perfil).'],
-    ['Varios árboles', 'Cada persona puede estar en hasta tres árboles, con el mismo perfil. Cualquiera que ya esté en un árbol puede plantar uno nuevo: ocupa la posición 1 e invita a las posiciones 2 y 3.'],
+    ['Entrar', 'Solo con convocatoria por correo. La primera vez, cada persona escribe su nombre y lo que importa (al menos una palabra; se puede cambiar o ampliar después desde Mi perfil).'],
+    ['Varios árboles', 'Cada persona puede estar en hasta tres árboles, con el mismo perfil. Cualquiera que ya esté en un árbol puede plantar uno nuevo: ocupa la posición 1 y convoca a las posiciones 2 y 3.'],
     ['Nombre del árbol', 'Lo acuerdan las tres personas de la semilla. Como propuesta inicial se toma lo que cada una puso en Lo que importa. Una propone el nombre y el tipo (temático o geográfico, y en ese caso de qué lugar), y queda fijo cuando las tres están de acuerdo. Hasta entonces la semilla puede completarse, pero no se abren las tríadas siguientes.'],
-    ['Quieren sumarse', 'Quien quiere sumarse a un árbol deja un pedido desde la app. La persona 1 del árbol recibe el aviso por correo y decide en qué posición se sumaría: si la posición es suya, invita en el momento; si es de otra persona, esa persona recibe el aviso para invitar. Los pedidos vencen a los 30 días.'],
-    ['Tu tríada', 'Cada persona tiene su propia tríada en el alcance siguiente: sigue ocupando la primera posición (quien está en 1 también está en 1.1) e invita a las otras dos (1.2 y 1.3).'],
+    ['Quieren sumarse', 'Quien quiere sumarse a un árbol deja un pedido desde la app. La persona 1 del árbol recibe el aviso por correo y decide en qué posición se sumaría: si la posición es suya, convoca en el momento; si es de otra persona, esa persona recibe el aviso para convocar. Los pedidos vencen a los 30 días.'],
+    ['Tu tríada', 'Cada persona tiene su propia tríada en el alcance siguiente: sigue ocupando la primera posición (quien está en 1 también está en 1.1) y convoca a las otras dos (1.2 y 1.3).'],
     ['Tríadas siguientes', 'Las tríadas que siguen en la cadena de cada persona (1.1.1, 1.1.2, 1.1.3…) se abren cuando se completa la anterior.'],
     ['Alcance', 'Cada nivel multiplica por tres las posiciones: alcance 1 = 3, alcance 2 = 9, alcance 3 = 27, y así.'],
     ['Árbol', 'Cuando se completa el alcance 2 (9 personas) ya es un árbol. Desde ahí la semilla pasa a llamarse tríada base del tronco.'],
     ['Volver a entrar', 'Desde la app se pide un correo con un botón para entrar y un código (sirven una vez y vencen en 15 minutos).'],
-    ['Transparencia', 'Todas las personas de la red pueden ver todos los árboles: nombres, lo que importa a cada quien y sus posiciones. Los correos son privados: solo los ve la administradora en esta planilla (y quien invitó, mientras la invitación está pendiente).'],
-    ['Administradora', 'Quien creó la red. Puede corregir nombres, cancelar invitaciones y quitar a personas que no tengan a nadie en sus tríadas, en cualquier árbol.'],
+    ['Transparencia', 'Todas las personas de la red pueden ver todos los árboles: nombres, lo que importa a cada quien y sus posiciones. Los correos son privados: solo los ve la administradora en esta planilla (y quien convocó, mientras la convocatoria está pendiente).'],
+    ['Administradora', 'Quien creó la red. Puede corregir nombres, cancelar convocatorias y quitar a personas que no tengan a nadie en sus tríadas, en cualquier árbol.'],
     ['', ''],
     ['La pestaña Personas', ''],
     ['', 'Una fila por persona y por árbol: quien está en dos árboles tiene dos filas.'],
@@ -974,9 +1003,9 @@ function ordenarPlanilla() {
     ['Alcance de entrada', 'En qué alcance entró la persona (cuántos números tiene su posición).'],
     ['Nombre', 'Cómo la ve el resto.'],
     ['Correo', 'Con el que entra. No se muestra en la app.'],
-    ['Invitó (posición)', 'Posición de quien la invitó, en el mismo árbol.'],
-    ['Estado', 'Invitada (todavía no aceptó) o Activa.'],
-    ['Fecha de invitación / de entrada', 'Cuándo la invitaron y cuándo entró.'],
+    ['Convocó (posición)', 'Posición de quien la convocó, en el mismo árbol.'],
+    ['Estado', 'Convocada (todavía no aceptó) o Activa.'],
+    ['Fecha de convocatoria / de entrada', 'Cuándo la convocaron y cuándo entró.'],
     ['Lo que importa', 'Lo que la persona escribió al entrar o en Mi perfil.'],
     ['Árbol', 'El código del árbol (t1, t2…), el mismo de la pestaña Árboles.'],
     ['', ''],
@@ -986,7 +1015,7 @@ function ordenarPlanilla() {
     ['Estado', 'Sin tema o Tema acordado.'],
     ['Plantó (correo), Fecha', 'Quién plantó la semilla y cuándo.'],
     ['Propuesta', 'La propuesta de nombre que se está acordando, quién la hizo y qué posiciones de la semilla ya están de acuerdo.'],
-    ['La pestaña Quieren sumarse', 'Los pedidos para sumarse a cada árbol: quién, lo que le importa, su mensaje, el estado (Sin confirmar, Pendiente, Asignada, Invitada o Cerrada) y la posición elegida.'],
+    ['La pestaña Quieren sumarse', 'Los pedidos para sumarse a cada árbol: quién, lo que le importa, su mensaje, el estado (Sin confirmar, Pendiente, Asignada, Convocada o Cerrada) y la posición elegida.'],
     ['', 'La app escribe estas pestañas. Conviene no editarlas a mano: para corregir algo, usar las herramientas de administradora de la app.'],
     ['', ''],
     ['Todavía no está en la app', ''],

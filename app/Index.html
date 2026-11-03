@@ -148,6 +148,7 @@ table.sheet { border-collapse: separate; border-spacing: 0; font-size: 14px; min
 .sheet th, .sheet td { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 5px 9px; white-space: nowrap; text-align: left; vertical-align: middle; }
 .sheet thead th { position: sticky; top: 0; z-index: 1; background: var(--bg); font-family: var(--display); font-size: 14px; }
 .sheet td.pos { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.sheet td.pos.ocu { color: var(--ink); }
 .sheet td.nm { min-width: 110px; }
 .sheet .a0 { background: color-mix(in srgb, var(--bg) 55%, var(--surface)); }
 .sheet thead th.a0 { background: color-mix(in srgb, var(--bg) 80%, var(--line)); }
@@ -282,7 +283,7 @@ button.brand { background: none; border: 0; box-shadow: none; padding: 0; min-he
 .puertas button { width: 100%; text-align: left; font-size: 16px; min-height: 46px; padding: 11px 14px; }
 .cifras { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted); }
 .cifras b { font-family: var(--display); font-weight: 700; font-size: 19px; color: var(--ink); margin-right: 4px; }
-#msvg .lbl.pid { font-size: 9.5px; font-weight: 400; fill: var(--muted); }
+#msvg .lbl.pid { font-size: 9.5px; font-weight: 400; fill: var(--ink); }
 .wm { font-family: var(--display); font-weight: 600; letter-spacing: .16em; color: var(--ink); text-transform: uppercase; }
 .wm .o { color: var(--wm-o); font-weight: 600; } .wm .c { color: var(--wm-c); font-weight: 600; }
 .brand .wm { font-size: 14px; }
@@ -407,7 +408,7 @@ function heroPlay() {
 function heroHtml() {
   return '<div class="hero"><svg id="heroLogo" class="wmlogo" viewBox="' + WM_VB + '" role="img" aria-label="Logo de WhatMatters: un triángulo que se pliega en un tetraedro"></svg>' +
     '<div class="wm">' + wordmark().replace(/^<span class="wm">|<\/span>$/g, '') + '</div><div class="hsub">Lo que importa</div>' +
-    '<h2 class="lema">Un juego serio y emocionante<br class="m"> que entrena nuestra habilidad<br> para ponernos de acuerdo<br class="m"> en lo importante.</h2></div>';
+    '<h2 class="lema">Un juego serio y emocionante<br class="m"> que recompensa nuestra habilidad<br> para ponernos de acuerdo<br class="m"> en lo importante.</h2></div>';
 }
 TOKEN = lsGet('wm_red_token');
 if (!ARBOL) ARBOL = lsGet('wm_arbol');
@@ -438,11 +439,11 @@ function load() {
 }
 
 function member(l) {
-  var cls = l.estado === 'Activa' ? 'act' : l.estado === 'Invitada' ? 'inv' : 'free';
-  var name = l.estado === 'Activa' ? esc(l.nombre) + (l.yo ? ' (vos)' : '') : l.estado === 'Invitada' ? 'Invitada' + (l.correo ? ': ' + esc(l.correo) : '') : 'Posición libre';
+  var cls = l.estado === 'Activa' ? 'act' : l.estado === 'Convocada' ? 'inv' : 'free';
+  var name = l.estado === 'Activa' ? esc(l.nombre) + (l.yo ? ' (vos)' : '') : l.estado === 'Convocada' ? 'Convocada' + (l.correo ? ': ' + esc(l.correo) : '') : 'Posición por convocar';
   var h = '<div class="member ' + cls + (l.yo ? ' yo' : '') + '"' + (cls === 'act' ? ' style="--c:' + colorOf(l.pid) + '"' : '') + '><span class="dot"></span><span class="name">' + name + '</span><span class="pos">' + l.pos + '</span></div>';
-  if (l.puedoInvitar) h += '<form class="inv" data-inv="' + l.pos + '"><input type="email" placeholder="Correo para invitar" aria-label="Correo para la posición ' + l.pos + '" required><button type="submit">Invitar</button></form>';
-  if (l.mia) h += '<div class="small"><button class="link" style="color:var(--ink)" data-resend="' + l.pos + '">Reenviar invitación</button> · <button class="link" data-cancel="' + l.pos + '">Cancelar</button></div>';
+  if (l.puedoInvitar) h += '<form class="inv" data-inv="' + l.pos + '"><input type="email" placeholder="Correo para convocar" aria-label="Correo para la posición ' + l.pos + '" required><button type="submit">Convocar</button></form>';
+  if (l.mia) h += '<div class="small"><button class="link" style="color:var(--ink)" data-resend="' + l.pos + '">Reenviar convocatoria</button> · <button class="link" data-cancel="' + l.pos + '">Cancelar</button></div>';
   return h;
 }
 var TEMA_FIELD = '<label>Lo que importa <span class="small muted" style="font-weight:400">Al menos una palabra, luego se puede cambiar o ampliar. Puede ser un tema, una canción, una película, un lugar, etc.</span><input id="temaIn" maxlength="120" required></label>';
@@ -457,7 +458,7 @@ function comoFuncionaHtml() {
     '<p class="small muted">Cada árbol nace de una semilla de tres personas que acuerdan su nombre. Cada una abre después su propia tríada, y así el árbol crece.</p>' +
     '<ul class="small muted" style="margin:0;padding-left:18px;display:grid;gap:4px">' +
     '<li>WhatMatters es transparente: todas las personas de la red pueden ver todos los árboles, con los nombres, lo que le importa a cada quien y sus posiciones.</li>' +
-    '<li>Tu correo no se muestra. Solo lo ve quien te invitó mientras la invitación está pendiente.</li>' +
+    '<li>Tu correo no se muestra. Solo lo ve quien te convocó mientras la convocatoria está pendiente.</li>' +
     '<li>Tu correo se usa únicamente para mandarte los avisos de la red y el botón para entrar.</li>' +
     '<li>Los datos se guardan en una planilla de Google que administra quien creó la red.</li></ul>' +
     '<div class="btns"><button type="button" class="ghost" data-ir="inicio">Volver al inicio</button><button type="button" data-ir="entrar">Entrar</button></div></div>';
@@ -473,9 +474,9 @@ var VISTA = 'inicio';
 function irA(v) { VISTA = v; PERFIL = false; RENAME = null; if (v === 'red') OTROS = true; render(); window.scrollTo(0, 0); }
 function loginCard() {
   var inv = S.invitacion, h = '<div class="card">';
-  if (inv && inv.estado === 'Invitada' && !LOGIN) {
-    h += '<h2>' + esc(inv.de || 'Alguien') + ' te invitó a su tríada</h2><p class="small muted">' + (inv.arbolNombre ? 'Es en el árbol «' + esc(inv.arbolNombre) + '». ' : 'Es en la semilla de un árbol nuevo: el tema lo van a acordar entre las tres personas de la semilla. ') + 'Vas a ocupar la posición ' + esc(inv.pos) + ' con el correo ' + esc(inv.correo) + '.</p>';
-    h += '<form id="acceptForm" style="display:grid;gap:10px">' + (inv.conocida ? '<p class="small">Ya estás en otro árbol: entrás con tu nombre y lo que importa de siempre.</p>' : '<label>Tu nombre <span class="small muted" style="font-weight:400">Así te va a ver el resto de la red.</span><input id="nameIn" autocomplete="name" required></label>' + TEMA_FIELD) + '<button type="submit">Aceptar la invitación</button></form>';
+  if (inv && inv.estado === 'Convocada' && !LOGIN) {
+    h += '<h2>' + esc(inv.de || 'Alguien') + ' te convocó a su tríada</h2><p class="small muted">' + (inv.arbolNombre ? 'Es en el árbol «' + esc(inv.arbolNombre) + '». ' : 'Es en la semilla de un árbol nuevo: el tema lo van a acordar entre las tres personas de la semilla. ') + 'Vas a ocupar la posición ' + esc(inv.pos) + ' con el correo ' + esc(inv.correo) + '.</p>';
+    h += '<form id="acceptForm" style="display:grid;gap:10px">' + (inv.conocida ? '<p class="small">Ya estás en otro árbol: entrás con tu nombre y lo que importa de siempre.</p>' : '<label>Tu nombre <span class="small muted" style="font-weight:400">Así te va a ver el resto de la red.</span><input id="nameIn" autocomplete="name" required></label>' + TEMA_FIELD) + '<button type="submit">Aceptar la convocatoria</button></form>';
     return h + '</div>';
   }
   if (ACCN && !LOGIN) {
@@ -485,11 +486,11 @@ function loginCard() {
   }
   if (!LOGIN) {
     if (inv && inv.estado === 'Usada') {
-      h += '<h2>Esta invitación ya se usó</h2><p class="small muted">Si ya estás en la red, con tu correo te mandamos un botón para entrar.</p>';
+      h += '<h2>Esta convocatoria ya se usó</h2><p class="small muted">Si ya estás en la red, con tu correo te mandamos un botón para entrar.</p>';
     } else if (S.vacio) {
-      h += '<h2>Iniciar la red</h2><p class="small muted">La primera persona ocupa la posición 1 e invita a las otras dos de la semilla.</p>';
+      h += '<h2>Iniciar la red</h2><p class="small muted">La primera persona ocupa la posición 1 y convoca a las otras dos de la semilla.</p>';
     } else {
-      h += '<h2>Entrar a la red</h2><p class="small muted">Si ya estás en la red, con tu correo te mandamos un botón para entrar. Si te invitaron, el botón está en el correo de invitación.</p>';
+      h += '<h2>Entrar a la red</h2><p class="small muted">Si ya estás en la red, con tu correo te mandamos un botón para entrar. Si te convocaron, el botón está en el correo de convocatoria.</p>';
     }
     h += '<form id="mailForm" style="display:grid;gap:10px"><label>Correo<input id="mailIn" type="email" autocomplete="email" required value="' + esc(inv && inv.correo ? inv.correo : '') + '"></label><button type="submit">Enviarme el correo para entrar</button></form>';
     if (modoVisita()) h += '<div class="btns"><button type="button" class="ghost" data-ir="inicio">Volver al inicio</button></div>';
@@ -504,12 +505,12 @@ function loginCard() {
 }
 function otherSessionCard() {
   var inv = S.invitacion;
-  if (!S.yo || !inv || inv.estado !== 'Invitada') return '';
-  if (inv.correo === S.yo.correo) return '<div class="card" style="border-color:var(--sap)"><h2>' + esc(inv.de || 'Alguien') + ' te invitó a su tríada</h2>' +
+  if (!S.yo || !inv || inv.estado !== 'Convocada') return '';
+  if (inv.correo === S.yo.correo) return '<div class="card" style="border-color:var(--sap)"><h2>' + esc(inv.de || 'Alguien') + ' te convocó a su tríada</h2>' +
     '<p class="small muted">' + (inv.arbolNombre ? 'En el árbol «' + esc(inv.arbolNombre) + '»' : 'En la semilla de un árbol nuevo') + ', en la posición ' + esc(inv.pos) + '. Entrás con tu nombre y lo que importa de siempre.</p>' +
-    '<button type="button" data-aceptar="' + esc(inv.arbol) + '">Aceptar la invitación</button></div>';
-  return '<div class="card" style="border-color:var(--sap)"><h2>Esta invitación es para ' + esc(inv.correo) + '</h2>' +
-    '<p class="small muted">En este dispositivo está conectada la cuenta de ' + esc(S.yo.nombre || S.yo.correo) + '. Para aceptar la invitación hay que salir primero.</p>' +
+    '<button type="button" data-aceptar="' + esc(inv.arbol) + '">Aceptar la convocatoria</button></div>';
+  return '<div class="card" style="border-color:var(--sap)"><h2>Esta convocatoria es para ' + esc(inv.correo) + '</h2>' +
+    '<p class="small muted">En este dispositivo está conectada la cuenta de ' + esc(S.yo.nombre || S.yo.correo) + '. Para aceptar la convocatoria hay que salir primero.</p>' +
     '<button id="switchUser">Salir y aceptar como ' + esc(inv.correo) + '</button></div>';
 }
 // ---------- árbol ----------
@@ -591,7 +592,7 @@ function mapData() {
   var d = { people: {}, invited: {}, lug: {}, open: {}, owner: {}, D: Math.max(1, S.alcances.length), me: S.me && S.me.estado === 'Activa' ? S.me.pos : '', invitables: 0 };
   S.alcances.forEach(function (a) { a.triadas.forEach(function (t) {
     d.open[t.base] = true; d.owner[t.base] = t.duenio;
-    t.lugares.forEach(function (l) { d.lug[l.pos] = l; if (l.estado === 'Activa') d.people[l.pid] = l.nombre; else if (l.estado === 'Invitada') d.invited[l.pid] = l; if (l.puedoInvitar) d.invitables++; });
+    t.lugares.forEach(function (l) { d.lug[l.pos] = l; if (l.estado === 'Activa') d.people[l.pid] = l.nombre; else if (l.estado === 'Convocada') d.invited[l.pid] = l; if (l.puedoInvitar) d.invitables++; });
   }); });
   return d;
 }
@@ -641,17 +642,17 @@ function mdraw() {
     // El color del punto es el del alcance por el que entró esa persona: el mismo
     // del triángulo del que es vértice. Así el punto dice algo que se lee sin explicación.
     // El color dice el alcance; el borde y el relleno dicen el estado de la posición:
-    // ocupado = borde oscuro y relleno de color · convocada = borde oscuro y hueco · libre = solo aro de color.
+    // ocupado = borde oscuro y relleno de color · convocada = borde oscuro y hueco · por convocar = solo aro de color.
     var ca = scaleColor(mlen(pid));
     if (act) dots += '<circle' + dim + ' cx="' + x + '" cy="' + y + '" r="' + (detail ? 6.5 : 4.5) + '" fill="' + ca + '" stroke="var(--ink)" stroke-width="' + (detail ? 2 : 1.5) + '"/>';
     else if (inv) dots += '<circle' + dim + ' cx="' + x + '" cy="' + y + '" r="' + (detail ? 6 : 4.2) + '" fill="none" stroke="var(--ink)" stroke-width="' + (detail ? 2 : 1.5) + '"/>';
     else if (can) dots += '<circle' + dim + ' cx="' + x + '" cy="' + y + '" r="9" fill="none" stroke="' + ca + '" stroke-width="2" stroke-dasharray="3 2.5"/><text' + dim + ' class="plus" style="fill:' + ca + '" x="' + x + '" y="' + y + '">+</text>';
     else dots += '<circle' + dim + ' cx="' + x + '" cy="' + y + '" r="' + (detail ? 4.5 : 3) + '" fill="none" stroke="' + ca + '" stroke-opacity=".8" stroke-width="1.5"/>';
     hits.dots.push({ pid: pid, x: s[0], y: s[1] });
-    // Los nombres de las personas se ven siempre; los lugares libres, solo al acercar.
+    // Los nombres de las personas se ven siempre; las posiciones por convocar, solo al acercar.
     var want = act || can || yo || detail || (MSEL && MSEL.type === 'p' && MSEL.pid === pid);
     if (!want) return;
-    var idTxt = act ? 'P' + pid : '', txt = act ? shortName(M.people[pid]) + (yo ? ' (vos)' : '') : can ? 'Invitar' : 'P' + pid + (inv ? ' · invitada' : '');
+    var idTxt = act ? 'P' + pid : '', txt = act ? shortName(M.people[pid]) + (yo ? ' (vos)' : '') : can ? 'Convocar' : 'P' + pid + (inv ? ' · Convocada' : '');
     LB.push({ x: s[0], y: s[1], o: p.out || 0, gap: yo || can ? 18 : 14, txt: txt, id: idTxt, cls: act ? '' : can ? ' can' : ' free', dim: dim, pri: yo ? 0 : act ? 1 : can ? 2 : 3 });
   }
   // Ubica cada etiqueta donde no pise a otra: primero hacia afuera, si no a los costados, arriba o abajo.
@@ -670,7 +671,7 @@ function mdraw() {
         return false;
       });
       var clash = boxes.some(function (b) { return best.box[0] < b[2] && best.box[2] > b[0] && best.box[1] < b[3] && best.box[3] > b[1]; });
-      if (clash && L.pri >= 2) return; // un "P…" o "Invitar" que no entra se omite; los nombres siempre se muestran
+      if (clash && L.pri >= 2) return; // un "P…" o "Convocar" que no entra se omite; los nombres siempre se muestran
       boxes.push(best.box);
       if (L.id) labels += '<text class="lbl pid"' + L.dim + ' x="' + best.lx.toFixed(1) + '" y="' + (best.ly - 6.5).toFixed(1) + '" text-anchor="' + best.anchor + '">' + esc(L.id) + '</text>';
       labels += '<text class="lbl' + L.cls + '"' + L.dim + ' x="' + best.lx.toFixed(1) + '" y="' + (best.ly + (L.id ? 5.5 : 0)).toFixed(1) + '" text-anchor="' + best.anchor + '">' + esc(L.txt) + '</text>';
@@ -713,19 +714,19 @@ function mdraw() {
 function mlegend() {
   var h = '', top = Math.min(M.D, 5);
   for (var a = 1; a <= top; a++) h += '<span class="sw" style="--c:' + scaleColor(a) + '"><i></i><b>A' + a + '</b></span>';
-  h += '<span>alcance de las posiciones de cada tríada · árbol A' + M.D + '</span>';
-  h += '<span>el color dice el alcance; el borde, el estado de la posición</span>';
-  h += '<span><i style="background:' + scaleColor(1) + ';border:2px solid var(--ink)"></i>ocupada</span>';
-  h += '<span><i style="border:2px solid var(--ink)"></i>convocada</span>';
-  h += '<span><i style="border:2px solid ' + scaleColor(1) + '"></i>libre</span>';
-  if (M.invitables) h += '<span><i style="border:2px dashed ' + scaleColor(1) + '"></i>podés invitar</span>';
+  h += '<span>Alcance de las posiciones de cada árbol</span>';
+  h += '<span>El color muestra el alcance y el borde muestra el estado de la posición</span>';
+  h += '<span><i style="background:' + scaleColor(1) + ';border:2px solid var(--ink)"></i>Ocupada</span>';
+  h += '<span><i style="border:2px solid var(--ink)"></i>Convocada</span>';
+  h += '<span><i style="border:2px solid ' + scaleColor(1) + '"></i>Por convocar</span>';
+  if (M.invitables) h += '<span><i style="border:2px dashed ' + scaleColor(1) + '"></i>Podés convocar</span>';
   return '<div class="legend mlegend">' + h + '</div>';
 }
 function triName(b) { return b === '' ? ((S.alcanzado || 0) >= 2 ? 'Tríada base del tronco' : 'Semilla') : 'Tríada de ' + (M.owner[b] || M.people[pidOfSlot(b)] || 'P' + pidOfSlot(b)) + ' (' + b + ')'; }
 function mcard() {
   var c = $('#mcard'); if (!c) return;
   if (!MSEL) {
-    c.innerHTML = '<span class="small muted">' + (M.invitables ? 'Tenés ' + M.invitables + (M.invitables === 1 ? ' posición libre' : ' posiciones libres') + ' para invitar: son los círculos verdes con +. Al tocar uno se puede invitar.' : 'Al tocar a una persona se ven sus tríadas; al tocar un triángulo, quiénes lo forman.') + '</span>';
+    c.innerHTML = '<span class="small muted">' + (M.invitables ? 'Tenés ' + M.invitables + (M.invitables === 1 ? ' posición por convocar' : ' posiciones por convocar') + ': son los círculos verdes con +. Al tocar uno se puede convocar.' : 'Al tocar a una persona se ven sus tríadas; al tocar un triángulo, quiénes lo forman.') + '</span>';
     bind(); return;
   }
   var h = '';
@@ -744,17 +745,17 @@ function mcard() {
         (ADMIN() && pid !== M.me ? (QCONF === pid ? '<span class="small">¿Quitar a ' + esc(M.people[pid]) + ' de este árbol? <button type="button" class="link" data-quitar-ok="' + pid + '">Sí, quitar</button> · <button type="button" class="link" style="color:var(--ink)" data-quitar-no="1">No</button></span>' : '<button type="button" class="link" data-quitar="' + pid + '">Quitar del árbol</button>') : '') + '</div>';
       h += '<div class="chips">' + own.map(function (o) { return '<span class="chipt" style="--c:' + scaleColor(mlen(o) + 1) + '">' + (o === '' ? triName('') : 'Tríada ' + o) + ' · A' + (mlen(o) + 1) + (M.open[o] ? '' : ' · sin abrir') + '</span>'; }).join('') + '</div>';
     } else if (inv) {
-      h += '<b class="name">' + (inv.mia ? 'Invitaste a ' + esc(inv.correo || '') : 'Invitada') + '</b><span class="small muted">Posición ' + pid + ', ' + where + '. Todavía no aceptó.</span>';
-      if (inv.mia) h += '<div class="small"><button class="link" style="color:var(--ink)" data-resend="' + pid + '">Reenviar invitación</button> · <button class="link" data-cancel="' + pid + '">Cancelar</button></div>';
-      else if (ADMIN()) h += '<div class="small"><button class="link" data-cancel="' + pid + '">Cancelar esta invitación</button> <span class="muted">(como administradora)</span></div>';
+      h += '<b class="name">' + (inv.mia ? 'Convocaste a ' + esc(inv.correo || '') : 'Convocada') + '</b><span class="small muted">Posición ' + pid + ', ' + where + '. Todavía no aceptó.</span>';
+      if (inv.mia) h += '<div class="small"><button class="link" style="color:var(--ink)" data-resend="' + pid + '">Reenviar convocatoria</button> · <button class="link" data-cancel="' + pid + '">Cancelar</button></div>';
+      else if (ADMIN()) h += '<div class="small"><button class="link" data-cancel="' + pid + '">Cancelar esta convocatoria</button> <span class="muted">(como administradora)</span></div>';
     } else {
-      h += '<b class="name">Posición libre · P' + pid + '</b><span class="small muted">' + (M.open[entry] || mlen(pid) === 1 ? 'Está ' + where + '.' : 'Su tríada todavía no se abrió.') + '</span>';
-      if (l.puedoInvitar) h += '<form class="inv" data-inv="' + pid + '"><input type="email" placeholder="Correo para invitar" aria-label="Correo para la posición ' + pid + '" required><button type="submit">Invitar</button></form>';
+      h += '<b class="name">Por convocar · P' + pid + '</b><span class="small muted">' + (M.open[entry] || mlen(pid) === 1 ? 'Está ' + where + '.' : 'Su tríada todavía no se abrió.') + '</span>';
+      if (l.puedoInvitar) h += '<form class="inv" data-inv="' + pid + '"><input type="email" placeholder="Correo para convocar" aria-label="Correo para la posición ' + pid + '" required><button type="submit">Convocar</button></form>';
     }
   } else {
     var tb = MSEL.b, m = M.D - mlen(tb), op = !!M.open[tb], compl = op && slotsOf(tb).every(function (x) { return !!M.people[pidOfSlot(x)]; });
     h += '<b class="name">' + esc(triName(tb)) + ' · A' + (mlen(tb) + 1) + '</b><span class="small muted">Sus posiciones están en el alcance ' + (mlen(tb) + 1) + '. De ella cuelgan ' + num(Math.pow(3, m)) + ' posiciones hasta el alcance ' + M.D + ' del árbol · ' + (!op ? 'todavía sin abrir' : compl ? 'completa' : 'a medias') + '</span>';
-    h += '<div class="chips">' + slotsOf(tb).map(function (sl) { var p = pidOfSlot(sl), a = !!M.people[p]; return '<span class="chipt" style="--c:' + (a ? colorOf(p) : 'var(--line)') + '">' + sl + ' · ' + esc(a ? M.people[p] : M.invited[p] ? 'invitada' : 'P' + sl) + '</span>'; }).join('') + '</div>';
+    h += '<div class="chips">' + slotsOf(tb).map(function (sl) { var p = pidOfSlot(sl), a = !!M.people[p]; return '<span class="chipt" style="--c:' + (a ? colorOf(p) : 'var(--line)') + '">' + sl + ' · ' + esc(a ? M.people[p] : M.invited[p] ? 'Convocada' : 'P' + sl) + '</span>'; }).join('') + '</div>';
   }
   c.innerHTML = h; bind();
 }
@@ -819,13 +820,13 @@ function sheetName(slot) {
   if (M.people[pid]) return '<button type="button" class="pname" data-gomap="' + pid + '" title="Ver en el mapa"><span class="sdot" style="background:' + colorOf(pid) + '"></span>' + esc(M.people[pid]) + (pid === M.me ? ' <span class="muted">(vos)</span>' : '') + '</button>';
   if (slot === pid && M.invited[pid]) {
     var iv = M.invited[pid];
-    return '<span class="sinv">invitada' + (iv.mia && iv.correo ? ': ' + esc(iv.correo) : '') + '</span>' +
+    return '<span class="sinv">Convocada' + (iv.mia && iv.correo ? ': ' + esc(iv.correo) : '') + '</span>' +
       (iv.mia ? ' <button class="link" style="color:var(--ink)" data-resend="' + slot + '">Reenviar</button> · <button class="link" data-cancel="' + slot + '">Cancelar</button>' : '');
   }
-  if (slot === pid && l && l.puedoInvitar) return '<button type="button" class="sadd" data-openinv="' + slot + '">+ Invitar</button>';
+  if (slot === pid && l && l.puedoInvitar) return '<button type="button" class="sadd" data-openinv="' + slot + '">+ Convocar</button>';
   return '';
 }
-var LFILT = (function () { var v = lsGet('wm_lfilt'); return v === 'llenas' || v === 'vacias' ? v : 'todas'; })();
+var LFILT = (function () { var v = lsGet('wm_lfilt'); return v === 'ocupadas' || v === 'convocadas' || v === 'porconvocar' ? v : 'todas'; })();
 var FOLD = {}; // grupos plegados, como agrupar filas en Excel
 var FLASH = '';
 function listHtml() {
@@ -834,8 +835,10 @@ function listHtml() {
   // Como en la hoja: todas las ramas con todos sus lugares hasta el último alcance, llenos o vacíos.
   (function gen(slot) { if (mlen(slot) >= D) { rows.push(slot); return; } slotsOf(slot).forEach(gen); })('');
   var full = function (r) { return !!M.people[pidOfSlot(r)]; };
-  var nLl = rows.filter(full).length, nVa = rows.length - nLl;
-  var vis = rows.filter(function (r) { return LFILT === 'todas' || (LFILT === 'llenas' ? full(r) : !full(r)); });
+  var estadoDe = function (r) { var q = pidOfSlot(r); return M.people[q] ? 'ocupadas' : M.invited[q] ? 'convocadas' : 'porconvocar'; };
+  var cuenta = { ocupadas: 0, convocadas: 0, porconvocar: 0 };
+  rows.forEach(function (r) { cuenta[estadoDe(r)]++; });
+  var vis = rows.filter(function (r) { return LFILT === 'todas' || estadoDe(r) === LFILT; });
   // cuántas filas visibles tiene cada grupo (para saber cuáles se pueden plegar)
   var size = {};
   vis.forEach(function (r) { var seg = r.split('.'); for (var a = 1; a < seg.length; a++) { var k = seg.slice(0, a).join('.'); size[k] = (size[k] || 0) + 1; } });
@@ -847,13 +850,13 @@ function listHtml() {
     if (!hide) shown.push(r);
   });
   var h = '<div class="ltools"><div class="lfilt" role="group" aria-label="Qué posiciones mostrar">' +
-    [['todas', 'Todas', rows.length], ['llenas', 'Llenas', nLl], ['vacias', 'Vacías', nVa]].map(function (f) {
+    [['todas', 'Todas', rows.length], ['ocupadas', 'Ocupadas', cuenta.ocupadas], ['convocadas', 'Convocadas', cuenta.convocadas], ['porconvocar', 'Por convocar', cuenta.porconvocar]].map(function (f) {
       return '<button type="button" data-lfilt="' + f[0] + '" aria-pressed="' + (LFILT === f[0]) + '">' + f[1] + ' <small>' + f[2] + '</small></button>';
     }).join('') + '</div>' + (M.me ? '<button type="button" class="lme" id="goMe">Ir a mí</button>' : '') + '</div>';
   h += '<div class="sheet-wrap"><table class="sheet"><thead><tr>';
   for (var a = 1; a <= D; a++) h += '<th colspan="2" class="a' + (a % 2) + (a === 1 ? ' fix' : '') + '">Alcance ' + a + '</th>';
   h += '</tr></thead><tbody>';
-  if (!shown.length) h += '<tr><td colspan="' + (2 * D) + '" class="nm">' + (LFILT === 'llenas' ? 'Todavía no hay posiciones con personas.' : 'No hay posiciones vacías.') + '</td></tr>';
+  if (!shown.length) h += '<tr><td colspan="' + (2 * D) + '" class="nm">' + (LFILT === 'ocupadas' ? 'Todavía no hay posiciones ocupadas.' : LFILT === 'convocadas' ? 'No hay posiciones convocadas.' : 'No hay posiciones por convocar.') + '</td></tr>';
   var prev = null;
   shown.forEach(function (r) {
     var seg = r.split('.'), brk = 0;
@@ -868,7 +871,7 @@ function listHtml() {
       var canFold = a < seg.length && (size[slot] || 0) > 1, folded = !!FOLD[slot];
       var fold = canFold || folded ? '<button type="button" class="fold" data-fold="' + slot + '" aria-label="' + (folded ? 'Desplegar ' : 'Plegar ') + 'P' + slot + '">' + (folded ? '+' : '−') + '</button>' : '';
       var more = folded ? ' <span class="muted small">(' + (size[slot] || 1) + ' filas)</span>' : '';
-      h += '<td class="pos' + cls + '">' + fold + 'P' + slot + '</td><td class="nm' + cls + '" data-cell="' + slot + '">' + sheetName(slot) + more + '</td>';
+      h += '<td class="pos' + cls + (M.people[pidOfSlot(slot)] ? ' ocu' : '') + '">' + fold + 'P' + slot + '</td><td class="nm' + cls + '" data-cell="' + slot + '">' + sheetName(slot) + more + '</td>';
     }
     h += '</tr>'; prev = seg;
   });
@@ -877,7 +880,7 @@ function listHtml() {
 function goMe() { if (M.me) goList(M.me); }
 function goList(pid) {
   if (TAB !== 'lista') { TAB = 'lista'; lsSet('wm_tab', TAB); }
-  if (LFILT === 'vacias' && M.people[pid]) { LFILT = 'todas'; lsSet('wm_lfilt', LFILT); }
+  if ((LFILT === 'convocadas' || LFILT === 'porconvocar') && M.people[pid]) { LFILT = 'todas'; lsSet('wm_lfilt', LFILT); }
   var seg = pid.split('.'); for (var a = 1; a <= seg.length; a++) delete FOLD[seg.slice(0, a).join('.')];
   FLASH = pid; render();
   var c = document.querySelector('[data-cell="' + pid + '"]');
@@ -929,10 +932,10 @@ function arbolInfo() {
 function tcardHtml(t, compact) {
   var cur = S.arbol && t.id === S.arbol.id;
   var tags = '<span class="tag ' + (t.esArbol ? 'arbol">Árbol' : 'semilla">Semilla') + '</span>' + (t.tipo ? '<span class="tag">' + esc(t.tipo) + '</span>' : '');
-  var info = num(t.personas) + (t.personas === 1 ? ' persona' : ' personas') + (t.ajeno ? '' : t.estado === 'Invitada' ? ' · te invitaron a la posición ' + esc(t.pos) : ' · tu posición: ' + esc(t.pos));
+  var info = num(t.personas) + (t.personas === 1 ? ' persona' : ' personas') + (t.ajeno ? '' : t.estado === 'Convocada' ? ' · te convocaron a la posición ' + esc(t.pos) : ' · tu posición: ' + esc(t.pos));
   var aviso = !t.acordado ? '<span class="small muted">' + (t.falta ? 'Hay una propuesta de nombre para acordar.' : 'Falta acordar el nombre.') + '</span>' : '';
   var h = '<button type="button" class="tcard' + (cur ? ' cur' : '') + (compact ? ' mini' : '') + '" data-tree="' + esc(t.id) + '"' + (cur ? ' aria-current="true"' : '') + '><b>' + esc(t.nombre) + '</b><span class="row">' + tags + '<span class="small muted">' + info + '</span></span>' + (compact ? '' : aviso) + '</button>';
-  if (t.estado === 'Invitada') h += '<button type="button" data-aceptar="' + esc(t.id) + '">Aceptar la invitación a este árbol</button>';
+  if (t.estado === 'Convocada') h += '<button type="button" data-aceptar="' + esc(t.id) + '">Aceptar la convocatoria a este árbol</button>';
   return h;
 }
 // Arriba del todo, después de entrar: los árboles de la persona (hasta tres) y la opción de plantar.
@@ -942,11 +945,11 @@ function misArboles() {
   h += '<div class="tlist">' + mios.map(function (t) { return tcardHtml(t, true); }).join('') + '</div>';
   if (S.puedoPlantar) {
     if (PLANTAR) {
-      h += '<form id="plantForm" class="card" style="gap:10px"><h2>Plantar un árbol</h2><p class="small">Vas a ocupar la posición 1 de una semilla nueva e invitar a dos personas para las posiciones 2 y 3.</p>' +
+      h += '<form id="plantForm" class="card" style="gap:10px"><h2>Plantar un árbol</h2><p class="small">Vas a ocupar la posición 1 de una semilla nueva y convocar a dos personas para las posiciones 2 y 3.</p>' +
         '<label>Posición 2<input id="pl2" type="email" placeholder="Correo de la persona" required></label>' +
         '<label>Posición 3<input id="pl3" type="email" placeholder="Correo de la persona" required></label>' +
         '<p class="small muted">El nombre del árbol no lo elige quien planta: lo acuerdan las tres personas de la semilla cuando entren. Esta semilla va a ocupar uno de tus tres árboles.</p>' +
-        '<div class="btns"><button type="submit">Plantar e invitar</button><button type="button" class="ghost" id="plantNo">Cancelar</button></div></form>';
+        '<div class="btns"><button type="submit">Plantar y convocar</button><button type="button" class="ghost" id="plantNo">Cancelar</button></div></form>';
     } else {
       h += '<button type="button" class="plant" id="plantSi">+ Plantar un árbol nuevo</button>';
     }
@@ -989,13 +992,13 @@ function pedidosCard() {
       '<span class="small">Lo que importa: <b>' + esc(q.tema) + '</b></span>' + (q.mensaje ? '<p class="small pedmsg">«' + esc(q.mensaje) + '»</p>' : '');
     if (q.estado === 'Asignada') {
       r += '<span class="small muted">Propuesto para la posición ' + esc(q.lugar) + ', en la tríada de ' + esc(q.asignadoNombre || 'P' + q.asignado) + '.</span>';
-      if (q.soyAsignada) r += '<div class="btns"><button type="button" data-pedinv="' + esc(q.id) + '">Invitar a la posición ' + esc(q.lugar) + '</button><button type="button" class="ghost" data-peddev="' + esc(q.id) + '">No puedo</button></div>';
+      if (q.soyAsignada) r += '<div class="btns"><button type="button" data-pedinv="' + esc(q.id) + '">Convocar a la posición ' + esc(q.lugar) + '</button><button type="button" class="ghost" data-peddev="' + esc(q.id) + '">No puedo</button></div>';
     } else if (q.soyP1) {
       if (S.libres.length) {
         r += '<div class="pedasig"><label class="small" style="font-weight:700">Posición donde se sumaría<select data-pedsel="' + esc(q.id) + '">' +
           S.libres.map(function (l) { return '<option value="' + esc(l.pos) + '" data-dueno="' + esc(l.dueno) + '">' + esc(l.pos) + ' · ' + (l.dueno === '1' ? 'tu tríada' : 'tríada de ' + esc(l.duenoNombre)) + '</option>'; }).join('') +
-          '</select></label><div class="btns"><button type="button" data-pedok="' + esc(q.id) + '">' + (S.libres[0].dueno === '1' ? 'Invitar' : 'Proponer esta posición') + '</button><button type="button" class="ghost" data-pedcer="' + esc(q.id) + '">Cerrar el pedido</button></div></div>';
-      } else r += '<span class="small muted">Por ahora no hay posiciones libres abiertas en el árbol.</span><div class="btns"><button type="button" class="ghost" data-pedcer="' + esc(q.id) + '">Cerrar el pedido</button></div>';
+          '</select></label><div class="btns"><button type="button" data-pedok="' + esc(q.id) + '">' + (S.libres[0].dueno === '1' ? 'Convocar' : 'Proponer esta posición') + '</button><button type="button" class="ghost" data-pedcer="' + esc(q.id) + '">Cerrar el pedido</button></div></div>';
+      } else r += '<span class="small muted">Por ahora no hay posiciones por convocar abiertas en el árbol.</span><div class="btns"><button type="button" class="ghost" data-pedcer="' + esc(q.id) + '">Cerrar el pedido</button></div>';
     } else r += '<span class="small muted">Esperando a que la persona 1 del árbol elija la posición.</span>';
     return r + '</div>';
   }).join('');
@@ -1155,25 +1158,25 @@ function bind() {
   Array.prototype.forEach.call(document.querySelectorAll('[data-quitar-ok]'), function (b) {
     b.onclick = function () {
       if (BUSY) return; busy(true); var pos = b.getAttribute('data-quitar-ok');
-      call('quitarPersona', TOKEN, ARBOL, pos).then(function () { busy(false); QCONF = null; MSEL = null; LAST_STATE = ''; toast('Listo, P' + pos + ' quedó libre'); return load(); }).catch(function (err) { busy(false); QCONF = null; toast(errMsg(err), true); mcard(); });
+      call('quitarPersona', TOKEN, ARBOL, pos).then(function () { busy(false); QCONF = null; MSEL = null; LAST_STATE = ''; toast('Listo, P' + pos + ' quedó por convocar'); return load(); }).catch(function (err) { busy(false); QCONF = null; toast(errMsg(err), true); mcard(); });
     };
   });
   Array.prototype.forEach.call(document.querySelectorAll('[data-lfilt]'), function (b) { b.onclick = function () { LFILT = b.getAttribute('data-lfilt'); lsSet('wm_lfilt', LFILT); render(); }; });
   Array.prototype.forEach.call(document.querySelectorAll('[data-openinv]'), function (btn) {
     btn.onclick = function () {
       var slot = btn.getAttribute('data-openinv'), td = btn.parentNode;
-      td.innerHTML = '<form class="inv sinvf" data-inv="' + slot + '"><input type="email" placeholder="Correo" aria-label="Correo para la posición ' + slot + '" required><button type="submit">Invitar</button></form>';
+      td.innerHTML = '<form class="inv sinvf" data-inv="' + slot + '"><input type="email" placeholder="Correo" aria-label="Correo para la posición ' + slot + '" required><button type="submit">Convocar</button></form>';
       bind(); var i = td.querySelector('input'); if (i) i.focus();
     };
   });
   Array.prototype.forEach.call(document.querySelectorAll('form[data-inv]'), function (f) {
     f.onsubmit = function (e) {
       e.preventDefault(); if (BUSY) return; busy(true);
-      call('invitar', TOKEN, ARBOL, f.getAttribute('data-inv'), f.querySelector('input').value).then(function () { busy(false); toast('Invitación enviada por correo'); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); });
+      call('invitar', TOKEN, ARBOL, f.getAttribute('data-inv'), f.querySelector('input').value).then(function () { busy(false); toast('Convocatoria enviada por correo'); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); });
     };
   });
   Array.prototype.forEach.call(document.querySelectorAll('[data-cancel]'), function (b) {
-    b.onclick = function () { if (BUSY) return; busy(true); call('cancelarInvitacion', TOKEN, ARBOL, b.getAttribute('data-cancel')).then(function () { busy(false); toast('Invitación cancelada'); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); }); };
+    b.onclick = function () { if (BUSY) return; busy(true); call('cancelarInvitacion', TOKEN, ARBOL, b.getAttribute('data-cancel')).then(function () { busy(false); toast('Convocatoria cancelada'); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); }); };
   });
   Array.prototype.forEach.call(document.querySelectorAll('[data-tree]'), function (b) { b.onclick = function () { var id = b.getAttribute('data-tree'); switchTree(id).then(function () { var m = $('.tabs'); if (m) m.scrollIntoView({ block: 'start', behavior: 'smooth' }); }); }; });
   Array.prototype.forEach.call(document.querySelectorAll('details.otros'), function (od) { od.ontoggle = function () { OTROS = od.open; }; });
@@ -1196,15 +1199,15 @@ function bind() {
     }).catch(function (err) { busy(false); toast(errMsg(err), true); });
   };
   Array.prototype.forEach.call(document.querySelectorAll('select[data-pedsel]'), function (sel) {
-    sel.onchange = function () { var o = sel.options[sel.selectedIndex], b = document.querySelector('[data-pedok="' + sel.getAttribute('data-pedsel') + '"]'); if (b) b.textContent = o.getAttribute('data-dueno') === '1' ? 'Invitar' : 'Proponer esta posición'; };
+    sel.onchange = function () { var o = sel.options[sel.selectedIndex], b = document.querySelector('[data-pedok="' + sel.getAttribute('data-pedsel') + '"]'); if (b) b.textContent = o.getAttribute('data-dueno') === '1' ? 'Convocar' : 'Proponer esta posición'; };
   });
   Array.prototype.forEach.call(document.querySelectorAll('[data-pedok]'), function (b) {
     b.onclick = function () {
       if (BUSY) return; var id = b.getAttribute('data-pedok'), sel = document.querySelector('select[data-pedsel="' + id + '"]'); busy(true);
-      call('asignarPedido', TOKEN, id, sel ? sel.value : '').then(function (res) { busy(false); LAST_STATE = ''; toast(res.invitada ? 'Invitación enviada por correo.' : 'Listo: ' + (res.dueno || 'la persona') + ' recibe el aviso para invitar.'); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); });
+      call('asignarPedido', TOKEN, id, sel ? sel.value : '').then(function (res) { busy(false); LAST_STATE = ''; toast(res.invitada ? 'Convocatoria enviada por correo.' : 'Listo: ' + (res.dueno || 'la persona') + ' recibe el aviso para convocar.'); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); });
     };
   });
-  [['data-pedinv', 'invitarPedido', 'Invitación enviada por correo.'], ['data-peddev', 'devolverPedido', 'El pedido volvió a la persona 1.'], ['data-pedcer', 'cerrarPedido', 'Pedido cerrado.']].forEach(function (k) {
+  [['data-pedinv', 'invitarPedido', 'Convocatoria enviada por correo.'], ['data-peddev', 'devolverPedido', 'El pedido volvió a la persona 1.'], ['data-pedcer', 'cerrarPedido', 'Pedido cerrado.']].forEach(function (k) {
     Array.prototype.forEach.call(document.querySelectorAll('[' + k[0] + ']'), function (b) {
       b.onclick = function () { if (BUSY) return; busy(true); call(k[1], TOKEN, b.getAttribute(k[0])).then(function () { busy(false); LAST_STATE = ''; toast(k[2]); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); }); };
     });
@@ -1217,7 +1220,7 @@ function bind() {
     call('plantarArbol', TOKEN, $('#pl2').value, $('#pl3').value).then(function (res) {
       busy(false);
       var err = res.errores && res.errores.length;
-      toast(err ? 'Plantaste la semilla, pero hubo un problema: ' + res.errores.join(' · ') : 'Plantaste una semilla nueva e invitaste a dos personas.', !!err);
+      toast(err ? 'Plantaste la semilla, pero hubo un problema: ' + res.errores.join(' · ') : 'Plantaste una semilla nueva y convocaste a dos personas.', !!err);
       return switchTree(res.arbol);
     }).catch(function (err) { busy(false); toast(errMsg(err), true); });
   };
@@ -1246,7 +1249,7 @@ function bind() {
     call('acordarTema', TOKEN, ARBOL).then(function (res) { busy(false); LAST_STATE = ''; toast(res.acordado ? '¡Nombre acordado! Ya se pueden abrir las tríadas siguientes.' : 'Listo, quedó registrado tu acuerdo.'); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); });
   };
   Array.prototype.forEach.call(document.querySelectorAll('[data-resend]'), function (b) {
-    b.onclick = function () { if (BUSY) return; busy(true); call('reenviarInvitacion', TOKEN, ARBOL, b.getAttribute('data-resend')).then(function () { busy(false); toast('Invitación reenviada'); }).catch(function (err) { busy(false); toast(errMsg(err), true); }); };
+    b.onclick = function () { if (BUSY) return; busy(true); call('reenviarInvitacion', TOKEN, ARBOL, b.getAttribute('data-resend')).then(function () { busy(false); toast('Convocatoria reenviada'); }).catch(function (err) { busy(false); toast(errMsg(err), true); }); };
   });
 }
 // Si se abrió desde el botón de un aviso, entra como quien recibió el correo (aunque hubiera otra sesión abierta).
