@@ -1,6 +1,6 @@
 # WhatMatters · nota de traspaso
 
-Para retomar el trabajo en una conversación nueva. Última actualización: 3 de noviembre de 2026.
+Para retomar el trabajo en una conversación nueva. Última actualización: 3 de noviembre de 2026 (bloque 1 publicado).
 
 ## Cómo trabajamos
 
@@ -26,9 +26,10 @@ Para retomar el trabajo en una conversación nueva. Última actualización: 3 de
 
 ## Estado al cierre
 
-- **Principal:** versión 46 (diseño nuevo: logo, modo claro/oscuro, fondo de Montevideo con datos abiertos, puntos con color por alcance).
-- **Prueba:** versión 47 = este repositorio (`app/`). Incluye: inicio con tres puertas (Ver cómo funciona · Ver la red · Entrar), portada solo en el inicio, WHATMATTERS lleva al inicio, lema, "Ver la red" con desplegable de árboles + mapa + lista, "posición" en lugar de "lugar" en app, correos y hoja, identificador de posición arriba del nombre en el mapa, mapa del árbol corrido al norte (todo en tierra), fondo con dos árboles nuevos (puerto y zona este), títulos más grandes.
-- **Pendiente:** ejecutar `ordenarPlanilla` desde el editor para reescribir la hoja "Cómo se juega" (conviene hacerlo con la próxima subida, cuando el lema nuevo esté en el código). En el editor, el selector de funciones se trabó al usarlo con el navegador automatizado; si vuelve a pasar, pedirle a Virginia que lo haga: elegir `ordenarPlanilla` junto a "Ejecutar" y tocar Ejecutar.
+- **Principal y prueba:** versión 48 = este repositorio (`app/`). Incluye el bloque 1 (ver abajo) sobre el diseño anterior: inicio con tres puertas, "Ver la red" con desplegable de árboles + mapa + lista, fondo de Montevideo con datos abiertos, modo claro/oscuro.
+- **Migración hecha** (3 nov 2026): en la planilla "Invitada" pasó a "Convocada" (Personas y Quieren sumarse) y las columnas se llaman "Convocó (posición)" y "Fecha de convocatoria". El código sigue leyendo "Invitada" por si aparece alguna fila vieja.
+- **Pendiente:** ejecutar `ordenarPlanilla` desde el editor para reescribir la hoja "Cómo se juega". Se decidió hacerlo **después del bloque 2**, para no hacerlo dos veces; la hoja todavía muestra el texto viejo (lema "entrena", "invitación"). Antes, repasar con Opus el texto de la hoja: hay filas que contradicen reglas del bloque 2 (Árbol, Tríadas siguientes, Nombre del árbol/tipo, vencimiento de convocatorias), "Alcance" usa la palabra "nivel", faltan los estados de posición, el estado del árbol dice "tema" en vez de "nombre", y conviene separar lo del juego de lo de las pestañas. En el editor el selector de funciones sí respondió esta vez: se abre, se baja la lista y se elige la función.
+- Regla de texto: todo con mayúscula inicial en etiquetas y leyendas. La regla 1 del texto de bienvenida ("Se requiere una invitación para empezar") se deja como está.
 
 ## Vocabulario acordado
 
@@ -39,7 +40,7 @@ Para retomar el trabajo en una conversación nueva. Última actualización: 3 de
 - **Semilla** = alcance 1. **Árbol** = desde que hay al menos una persona en el alcance 2. La semilla pasa a llamarse **tríada base del tronco** cuando se completa el alcance 2.
 - Lema: "Un juego serio y emocionante que recompensa nuestra habilidad para ponernos de acuerdo en lo importante." (en compu dos renglones, corte después de "habilidad"; en celular cuatro: "Un juego serio y emocionante / que recompensa nuestra habilidad / para ponernos de acuerdo / en lo importante."). Es una intención del juego, no una promesa inmediata.
 
-## Bloque 1 · textos, colores y filtros (acordado, sin implementar)
+## Bloque 1 · textos, colores y filtros (IMPLEMENTADO y publicado, versión 48)
 
 1. Lema nuevo (app y hoja "Cómo se juega").
 2. Estados de posición en leyenda, tarjetas, lista y mensajes: Ocupada · Convocada · Por convocar.
@@ -51,7 +52,7 @@ Para retomar el trabajo en una conversación nueva. Última actualización: 3 de
 8. **Migración en la misma subida:** en la planilla, estado "Invitada" → "Convocada" (Personas y Quieren sumarse) y columna "Invitó (posición)" → "Convocó (posición)". El código tiene que leer los dos valores durante la migración.
 9. El aviso "Este enlace es personal: conviene no reenviarlo" en el correo de convocatoria queda como está.
 
-## Bloque 2 · reglas del juego (acordado, sin implementar)
+## Bloque 2 · reglas del juego (acordado, sin implementar; hacerlo en una conversación nueva con Opus)
 
 1. **Convocar sin esperar:** cada persona puede llenar su propia tríada del alcance siguiente apenas entra, sin esperar a que se complete la tríada por la que entró.
    - Se mantiene el **freno del nombre**: hasta que la semilla acuerda el nombre no se abren tríadas siguientes.
@@ -91,6 +92,8 @@ node capturas-visitante.js    # capturas de las pantallas para quien no entró
 Requiere Node con Playwright y Chromium.
 
 ## Cómo publicar en Apps Script (con Claude en Chrome)
+
+Atajo que funcionó el 3 nov: subir el código a una rama temporal del repositorio y, desde la consola del editor, leerlo con `fetch` de `raw.githubusercontent.com` (funciona desde la página del editor), para no pasar los archivos por la conversación. Hace falta activar "Permitir salida a la red" en Configuración > Capacidades. La lista de versiones del diálogo de implementaciones puede no mostrar la versión recién creada: recargar el editor y volver a abrir el diálogo. Pasos completos:
 
 1. Abrir el editor. Con JavaScript, agregar un `<input type="file">` oculto (aria-label "wm upload") que guarde el texto del archivo en `window.__wmfile`.
 2. Subir el archivo con la herramienta de subida (la ruta tiene que estar bajo el directorio de trabajo).
