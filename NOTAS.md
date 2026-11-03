@@ -64,7 +64,8 @@ Para retomar el trabajo en una conversación nueva. Última actualización: 3 de
 5. **Lugar del árbol:** sin tipo; nombre y lugar para todos (acordar el nombre pide nombre y lugar). Ajustar las columnas Tipo/Lugar de la hoja Árboles.
 6. **Ciudad y lugar de cada persona** (al entrar y en Mi perfil), con el buscador de lugares incorporado de Apps Script (Maps.newGeocoder), sin pegar enlaces de Google Maps:
    - **Ciudad: obligatoria.**
-   - **Un lugar que te guste: opcional.** Texto propuesto: "Un lugar que te guste, solo a los efectos de dibujar el mapa del juego. Puede ser una plaza, un parque, una cafetería, etc. No es obligatorio: si preferís no elegir uno, el mapa marca un punto central de la ciudad que elijas, y siempre se puede cambiar desde Mi perfil." (pendiente de confirmar; ver más abajo).
+   - **Un lugar que te guste: opcional.** Texto acordado: "Un lugar que te guste, solo a los efectos de dibujar el mapa del juego. Puede ser una plaza, un parque, una cafetería, etc. No es obligatorio: si preferís no elegir uno, el mapa marca un punto central de la ciudad que elijas, por ejemplo Plaza Independencia si es Montevideo. Siempre se puede cambiar desde Mi perfil."
+   - **Punto por defecto:** una lista propia con la plaza principal de cada ciudad donde ya hay gente (Montevideo → Plaza Independencia; Punta del Este → Plaza Artigas), que crece con las ciudades nuevas. Para las demás ciudades, el punto que da el buscador de Google (no siempre es una plaza; verificar dónde cae el de Montevideo).
    - Idea de fondo: que cada persona quede georreferenciada a un lugar donde estaría dispuesta a encontrarse, para que el juego potencie el encuentro virtual y presencial.
 
 ## Bloque 3 · administración y búsqueda (acordado, sin implementar)
