@@ -1,0 +1,53 @@
+<script>
+if (!/fresh/.test(location.search)) {
+  window.__PRESET_PROPS = { setup_simple_v1: 'ok', setup_tema_v1: 'ok' };
+  window.__PRESET_ROWS = [
+    ['Posición','Alcance de entrada','Nombre','Correo','Invitó (posición)','Estado','Fecha de invitación','Fecha de entrada','Lo que importa'],
+    ['1',1,'Virginia Barsco','v@x.com','','Activa',new Date(2026,9,28),new Date(2026,9,28),'Confianza'],
+    ['2',1,'Ana Torres','w@x.com','1','Activa',new Date(2026,9,28),new Date(2026,9,28),'Arquitectura'],
+    ['2.3',2,'Carla Ruiz','i3@x.com','2','Activa',new Date(2026,9,28),new Date(2026,9,28),'Clima'],
+    ['3',1,'Bruno Díaz','m@x.com','1','Activa',new Date(2026,9,28),new Date(2026,9,28),'Tecnología']
+  ];
+}
+</script>
+<script>(function () {
+  function Sheet(name) { this.name = name; this.rows = []; }
+  Sheet.prototype.getLastRow = function () { return this.rows.length; };
+  Sheet.prototype.cell = function (r, c) { var row = this.rows[r - 1]; return row && row[c - 1] !== undefined ? row[c - 1] : ''; };
+  Sheet.prototype.put = function (r, c, v) { while (this.rows.length < r) this.rows.push([]); this.rows[r - 1][c - 1] = v; };
+  Sheet.prototype.getRange = function (a, b, c, d) { if (typeof a === 'string') return new Range(this, 1, 1, 1, 1); return new Range(this, a, b, c || 1, d || 1); };
+  Sheet.prototype.deleteRow = function (r) { this.rows.splice(r - 1, 1); }; Sheet.prototype.deleteRows = function (r, n) { this.rows.splice(r - 1, n); };
+  ['setFrozenRows', 'setColumnWidth'].forEach(function (m) { Sheet.prototype[m] = function () {}; });
+  function Range(sh, r, c, nr, nc) { this.sh = sh; this.r = r; this.c = c; this.nr = nr; this.nc = nc; }
+  Range.prototype.getValues = function () { var o = []; for (var i = 0; i < this.nr; i++) { var row = []; for (var j = 0; j < this.nc; j++) row.push(this.sh.cell(this.r + i, this.c + j)); o.push(row); } return o; };
+  Range.prototype.setValues = function (v) { if (v.length !== this.nr || v[0].length !== this.nc) throw new Error('dims'); for (var i = 0; i < this.nr; i++) for (var j = 0; j < this.nc; j++) this.sh.put(this.r + i, this.c + j, v[i][j]); return this; };
+  Range.prototype.setValue = function (v) { this.sh.put(this.r, this.c, v); return this; };
+  Range.prototype.getValue = function () { return this.sh.cell(this.r, this.c); };
+  ['setFontWeight', 'setBackground', 'setFontColor', 'setNumberFormat', 'setNumberFormats'].forEach(function (m) { Range.prototype[m] = function () { return this; }; });
+  var book = { sheets: {} }; window.__book = book; window.__Sheet = Sheet;
+  book.getSheetByName = function (n) { return book.sheets[n] || null; };
+  book.insertSheet = function (n) { var s = new Sheet(n); book.sheets[n] = s; return s; };
+  window.SpreadsheetApp = { getActive: function () { return book; }, flush: function () {} };
+  window.Session = { getScriptTimeZone: function () { return 'x'; }, getEffectiveUser: function () { return { getEmail: function () { return 'v@x.com'; } }; } };
+  window.Utilities = { formatDate: function (d) { return d.toISOString().slice(0, 10); }, getUuid: function () { return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) { var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); }); } };
+  window.__mails = [];
+  window.MailApp = { sendEmail: function (o) { window.__mails.push(o); }, getRemainingDailyQuota: function () { return 100; } };
+  var cache = {}; window.__cache = cache; window.CacheService = { getScriptCache: function () { return { get: function (k) { return cache[k] || null; }, put: function (k, v) { cache[k] = v; }, remove: function (k) { delete cache[k]; } }; } };
+  window.__clearWait = function () { Object.keys(cache).forEach(function (k) { if (k.indexOf('wait_') === 0 || k.indexOf('reinv_') === 0) delete cache[k]; }); };
+  window.ScriptApp = { getService: function () { return { getUrl: function () { return 'https://script.google.com/macros/s/TEST/exec'; } }; } };
+  window.Logger = { log: function () {} };
+  window.LockService = { getScriptLock: function () { return { waitLock: function () {}, releaseLock: function () {} }; } };
+  var props = window.__PRESET_PROPS || {}; window.__props = props; window.PropertiesService = { getScriptProperties: function () { return { getProperty: function (k) { return props[k] || null; }, setProperty: function (k, v) { props[k] = v; }, deleteProperty: function (k) { delete props[k]; }, getProperties: function () { return Object.assign({}, props); } }; } };
+  window.HtmlService = {};
+  function hasDate(x) { if (x instanceof Date) return true; if (x && typeof x === 'object') for (var k in x) if (hasDate(x[k])) return true; return false; }
+  function runner(ok, ko) { return new Proxy({}, { get: function (_, name) {
+    if (name === 'withSuccessHandler') return function (f) { return runner(f, ko); };
+    if (name === 'withFailureHandler') return function (f) { return runner(ok, f); };
+    return function () { var args = Array.prototype.slice.call(arguments); setTimeout(function () { try { var res = window[name].apply(null, JSON.parse(JSON.stringify(args))); if (hasDate(res)) throw new Error('DATE LEAK ' + name); ok && ok(res === undefined ? null : JSON.parse(JSON.stringify(res))); } catch (e) { window.__errors = (window.__errors || []).concat([name + ': ' + e.message]); ko && ko(e); } }, 10); };
+  } }); }
+  window.google = { script: { run: runner(null, null) } };
+})();
+</script>
+<script>
+if (window.__PRESET_ROWS) { var sh = window.__book.insertSheet('Personas'); window.__PRESET_ROWS.forEach(function (r, i) { r.forEach(function (v, j) { sh.put(i + 1, j + 1, v); }); }); }
+</script>

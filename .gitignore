@@ -1,0 +1,5 @@
+test/harness.html
+test/capturas/
+__pycache__/
+*.png
+node_modules/

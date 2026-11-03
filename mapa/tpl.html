@@ -1,0 +1,268 @@
+<title>Fondo de WhatMatters</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira:wght@500;600;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Escena a pantalla completa, columna de contenido centrada encima, controles flotando arriba. */
+:root{
+  --bg:#F1F5F9; --surface:#FFFFFF; --ink:#0B1726; --muted:#4F6278; --line:#C8D4E1;
+  --accent:#077A90; --edge:#9CC9D6; --on-accent:#FFFFFF; --glow:none;
+  --wm-o:#EE8400; --wm-c:#0AA9C2; --wm-k:#0B1726;
+  --m-land:#E7EDF3; --m-barrio:#B9C8D8; --m-ave:#FFFFFF; --m-water:#AEC8D4; --m-sand:#D9C9A4; --m-park:#BBDFC4; --m-f1:#0B8F55; --m-f2:#077A90;
+  --s4:#6A4ED6; --s5:#1D6DC6; --s1:#0A8FA6; --s2:#E07800; --s3:#C2189E; --neutro:#6F8296;
+  --accent-soft:#DDF2F6; --leaf:#0B8F55; --leaf-soft:#DDF4E8; --sap:#C96A00; --sap-soft:#FCEAD2;
+  --p1:#1E8A4A; --p2:#1D6DC6; --p3:#C2189E; --p2_2:#A77F00; --p2_3:#0A8FA6; --p3_2:#6A4ED6; --p1_2:#C2372F;
+  --display:"Saira","Avenir Next","Segoe UI",sans-serif;
+  --body:"Atkinson Hyperlegible","Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#060A12; --surface:#0B1424; --ink:#E8F4FF; --muted:#8FA8C2; --line:#1E3350;
+  --accent:#3FE0FF; --edge:#23577A; --on-accent:#04121A; --glow:0 0 16px rgba(63,224,255,.38);
+  --wm-o:#FF9A1F; --wm-c:#3FE0FF; --wm-k:#E8F4FF;
+  --m-land:#0C1A2A; --m-barrio:#2A4257; --m-ave:#33597C; --m-water:#0A2436; --m-sand:#5A4F35; --m-park:#1C5B42; --m-f1:#5CFF9D; --m-f2:#3FE0FF;
+    --s4:#A98BFF; --s5:#5B9BFF; --s1:#3FE0FF; --s2:#FF9A1F; --s3:#FF5CC8; --neutro:#9FD9FF;
+    --accent-soft:#0A2433; --leaf:#5CFF9D; --leaf-soft:#0D2A22; --sap:#FFB547; --sap-soft:#33240C;
+    --p1:#5CFF9D; --p2:#5B9BFF; --p3:#FF5CC8; --p2_2:#FFD84A; --p2_3:#3FE0FF; --p3_2:#A98BFF; --p1_2:#FF6B6B;
+  color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#060A12; --surface:#0B1424; --ink:#E8F4FF; --muted:#8FA8C2; --line:#1E3350;
+  --accent:#3FE0FF; --edge:#23577A; --on-accent:#04121A; --glow:0 0 16px rgba(63,224,255,.38);
+  --wm-o:#FF9A1F; --wm-c:#3FE0FF; --wm-k:#E8F4FF;
+  --m-land:#0C1A2A; --m-barrio:#2A4257; --m-ave:#33597C; --m-water:#0A2436; --m-sand:#5A4F35; --m-park:#1C5B42; --m-f1:#5CFF9D; --m-f2:#3FE0FF;
+    --s4:#A98BFF; --s5:#5B9BFF; --s1:#3FE0FF; --s2:#FF9A1F; --s3:#FF5CC8; --neutro:#9FD9FF;
+    --accent-soft:#0A2433; --leaf:#5CFF9D; --leaf-soft:#0D2A22; --sap:#FFB547; --sap-soft:#33240C;
+    --p1:#5CFF9D; --p2:#5B9BFF; --p3:#FF5CC8; --p2_2:#FFD84A; --p2_3:#3FE0FF; --p3_2:#A98BFF; --p1_2:#FF6B6B;
+  color-scheme:dark;}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;min-height:100%}
+.fondo{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.fondo svg{position:absolute;inset:0;width:100%;height:100%}
+.barra{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;flex-wrap:wrap;gap:7px 12px;align-items:center;
+  padding-block:7px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  background:color-mix(in srgb,var(--bg) 86%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.grupo{display:inline-flex;border:1px solid var(--edge);border-radius:2px;overflow:hidden}
+.seg{font:inherit;font-family:var(--display);font-weight:600;letter-spacing:.08em;background:none;color:var(--ink);border:0;border-right:1px solid var(--edge);
+  min-height:34px;padding:4px 15px;cursor:pointer;white-space:nowrap}
+.seg:last-child{border-right:0}
+.seg[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+.seg:focus-visible,.chk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chk{font:inherit;font-size:14px;display:inline-flex;align-items:center;gap:7px;background:none;color:var(--ink);border:1px solid var(--edge);border-radius:2px;min-height:36px;padding:4px 12px;cursor:pointer}
+.chk[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.rotulo{font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.nota,.notac{margin:0;font-size:11px;line-height:1.3;color:var(--muted);flex:1 1 100%;min-width:0}
+.nota b,.notac b{color:var(--ink);font-weight:700}
+.nota b{color:var(--ink);font-weight:700}
+.col{position:relative;z-index:1;max-width:640px;margin:0 auto;display:grid;gap:18px;
+  padding-block:18px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+/* v0 tarjetas sólidas · v1 translúcidas · v2 sin tarjetas con velo · v3 sin nada */
+.v1 .card,.v1 .tbar{background:color-mix(in srgb,var(--surface) 46%,transparent);-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px)}
+.v2 .card,.v3 .card,.v2 .hero,.v3 .hero{background:none;border:0;clip-path:none;padding-left:0;padding-right:0}
+.v2 .card,.v3 .card{border-top:1px solid color-mix(in srgb,var(--accent) 38%,transparent);padding-top:16px}
+.v2 .hero,.v3 .hero{padding-top:8px}
+.v2{background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--m-land) 74%,transparent) 7%,color-mix(in srgb,var(--m-land) 74%,transparent) 93%,transparent);
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.v3 .card,.v3 .hero,.v3 .marca{text-shadow:0 1px 4px var(--m-land),0 0 14px var(--m-land)}
+.card{background:var(--surface);border:1px solid var(--edge);padding:14px;display:grid;gap:10px;
+  clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px))}
+.card h2{font-family:var(--display);font-weight:600;font-size:20px;letter-spacing:.02em;margin:0}
+.card h2::before{content:"";display:inline-block;width:9px;height:11px;margin-right:9px;background:var(--accent);clip-path:polygon(0 0,100% 50%,0 100%);vertical-align:1px}
+.card p,.card li{margin:0;font-size:14px}
+.card ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.marca{position:relative;display:flex;align-items:center;gap:8px}
+.marca svg,.tbar svg{display:block;flex:none}
+.wm{font-family:var(--display);font-weight:600;letter-spacing:.16em;text-transform:uppercase}
+.wm .o{color:var(--wm-o)}.wm .c{color:var(--wm-c)}
+.hero{display:grid;justify-items:center;gap:6px;padding:26px 16px 22px;border:1px solid var(--edge);
+  clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px))}
+.hero svg{width:140px;height:140px;display:block}
+.hero .wm{font-size:34px}
+.hero .sub{font-family:var(--display);font-weight:500;font-size:15px;letter-spacing:.5em;text-transform:uppercase;color:var(--muted);padding-left:.5em}
+.campo{display:grid;gap:4px;font-size:13px;font-weight:700}
+.campo input{font:inherit;font-weight:400;color:var(--ink);background:color-mix(in srgb,var(--bg) 75%,var(--surface));border:1px solid var(--edge);border-radius:2px;padding:10px 12px;width:100%}
+.boton{font:inherit;font-family:var(--display);font-weight:600;letter-spacing:.05em;background:var(--accent);color:var(--on-accent);border:1px solid var(--accent);border-radius:2px;min-height:44px;padding:10px 14px;box-shadow:var(--glow);cursor:default}
+.col[hidden]{display:none}
+@media (max-width:420px){.hero .wm{font-size:27px;letter-spacing:.12em}.hero .sub{font-size:13px;letter-spacing:.4em}}
+/* Tríadas: el color sale de --c, que cada propuesta define por alcance. */
+.fondo polygon.t0, .fondo polygon.t1, .fondo polygon.t2, .fondo polygon.t3, .fondo polygon.t4 { fill: var(--c); stroke: var(--c); }
+.fondo circle.t0, .fondo circle.t1, .fondo circle.t2, .fondo circle.t3, .fondo circle.t4 { fill: var(--c); }
+.c0 .t0 { --c: var(--m-f2); } .c0 .t1 { --c: var(--m-f1); } .c0 .t2 { --c: var(--m-f2); }
+.c1 .t0 { --c: var(--s1); } .c1 .t1, .c1 .t2 { --c: var(--neutro); }
+.c1 .t1 { stroke-opacity: .30; } .c1 .t2 { stroke-opacity: .22; }
+.c1 .t1, .c1 .t2 { fill-opacity: .02; }
+.c2 .t0 { --c: var(--s1); } .c2 .t1 { --c: var(--s2); } .c2 .t2 { --c: var(--s3); }
+.c2 .t1 { stroke-opacity: .40; } .c2 .t2 { stroke-opacity: .26; }
+.c2 .t1, .c2 .t2 { fill-opacity: .022; }
+.c3 .t0 { --c: var(--s1); } .c3 .t1 { --c: var(--s2); } .c3 .t2 { --c: var(--s3); } .c3 .t3 { --c: var(--s4); } .c3 .t4 { --c: var(--s5); }
+/* El panel del árbol, igual que en la app */
+.panelarbol { position: relative; aspect-ratio: 1 / 1; max-width: 100%; border: 1px solid var(--edge); border-radius: 3px; overflow: hidden; background: var(--m-water); }
+.panelarbol svg { display: block; width: 100%; height: 100%; }
+.arbolsvg text { font-family: var(--body); paint-order: stroke; stroke: var(--m-land); stroke-width: 3px; stroke-linejoin: round; }
+.arbolsvg .num { font-family: var(--display); font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+.arbolsvg .lbl.pid { font-size: 10.5px; font-weight: 400; fill: var(--ink); fill-opacity: .72; }
+.arbolsvg .lbl { font-size: 12px; font-weight: 700; fill: var(--ink); dominant-baseline: central; }
+/* Los puntos: tres maneras de colorearlos */
+.d1 .pt { fill: var(--cp); r: 8px; } .d1 .pt.libre { fill: var(--m-land); stroke: var(--muted); r: 4.5px; } .d1 .pt.inv { r: 6.5px; }
+.d2 .pt { fill: var(--ce); r: 6px; } .d2 .pt.libre { fill: var(--m-land); stroke: var(--ce); r: 4.5px; } .d2 .pt.inv { fill: var(--sap-soft); r: 5.5px; }
+.d3 .pt { fill: var(--co); r: 6px; } .d3 .pt.libre { fill: var(--m-land); stroke: var(--co); r: 4.5px; } .d3 .pt.inv { fill: var(--sap-soft); r: 5.5px; }
+/* Inicio con tres puertas */
+.marca { background: none; border: 0; padding: 0; cursor: pointer; font: inherit; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+.chip { color: var(--ink); }
+.card h2.lema { font-size: 19px; line-height: 1.35; font-weight: 600; text-align: center; }
+.card h2.lema::before { display: none; }
+.lema br.m { display: none; }
+@media (max-width: 560px) { .lema br.m { display: inline; } }
+.cifras { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted); }
+.cifras b { font-family: var(--display); font-weight: 700; font-size: 19px; color: var(--ink); margin-right: 4px; }
+.puertas { display: grid; gap: 8px; margin-top: 4px; }
+.puertas button { display: grid; gap: 2px; justify-items: start; text-align: left; font: inherit; font-family: var(--display); font-weight: 600;
+  letter-spacing: .04em; font-size: 16px; background: none; color: var(--ink); border: 1px solid var(--edge); border-radius: 2px; padding: 11px 14px; cursor: pointer; }
+.puertas button small { font-family: var(--body); font-weight: 400; letter-spacing: 0; font-size: 12.5px; color: var(--muted); }
+.puertas button.pri { background: var(--accent); color: var(--on-accent); border-color: var(--accent); box-shadow: var(--glow); }
+.puertas button.pri small { color: var(--on-accent); opacity: .85; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.btns button { font: inherit; font-family: var(--display); font-weight: 600; letter-spacing: .05em; background: var(--accent); color: var(--on-accent);
+  border: 1px solid var(--accent); border-radius: 2px; min-height: 42px; padding: 8px 16px; cursor: pointer; }
+.btns button.ghost { background: none; color: var(--ink); border-color: var(--edge); box-shadow: none; }
+.card ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; font-size: 14px; }
+/* La portada solo en el inicio; adentro queda la línea de arriba */
+.topnav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.chip { font: inherit; font-size: 13px; background: color-mix(in srgb, var(--surface) 78%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  color: var(--ink); border: 1px solid var(--edge); border-radius: 2px; min-height: 34px; padding: 4px 12px; cursor: pointer; }
+{{APPCSS}}
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); margin-top: 8px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+.mlegend .sw { display: inline-flex; align-items: center; gap: 5px; }
+.mlegend .sw i { width: 18px; height: 0; border-radius: 0; border-top: 3px solid var(--c); margin: 0; }
+.mlegend .sw b { font-family: var(--display); color: var(--c); font-size: 14px; }
+.search input { font: inherit; font-weight: 400; color: var(--ink); background: color-mix(in srgb, var(--bg) 82%, transparent); border: 1px solid var(--edge); border-radius: 2px; padding: 9px 12px; width: 100%; }
+.col, .card, .arb, .vlista, .vmapa { min-width: 0; } .sheet-wrap { max-width: 100%; }
+.card > .tbar, .arb { margin-top: 10px; } .arb { display: grid; gap: 10px; }
+.tbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid var(--edge); padding: 10px 14px; }
+.tbar .k { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.tbar .v { display: block; font-family: var(--display); font-weight: 700; font-size: 17px; }
+</style>
+
+<div class="fondo c3" id="fondo" aria-hidden="true">{{SCENES}}</div>
+
+<div class="barra">
+  <span class="rotulo">Tríadas</span>
+  <span class="grupo">
+    <button type="button" class="seg" data-col="c1" aria-pressed="false" title="Solo el alcance 1">1</button>
+    <button type="button" class="seg" data-col="c2" aria-pressed="false" title="Los tres, con el naranja contenido">2</button>
+    <button type="button" class="seg" data-col="c3" aria-pressed="true" title="Los tres por igual">3</button>
+    <button type="button" class="seg" data-col="c0" aria-pressed="false" title="Como está hoy">Hoy</button>
+  </span>
+  <button type="button" class="chk" id="solo" aria-pressed="false">Solo el fondo</button>
+<p class="notac" data-notac="c1" hidden><b>1 · Solo el alcance 1</b> El cian real de A1; los alcances 2 y 3 quedan en un gris azulado. Es la más prudente: no compite con el naranja del logo y el fondo se lee como una sola familia.</p><p class="notac" data-notac="c2" hidden><b>2 · Los tres, con el naranja contenido</b> Cian, naranja y rosa reales, pero el naranja y el rosa con bastante menos presencia que el cian. Es la que recomiendo: enseña el código de colores sin pelearle al logo.</p><p class="notac" data-notac="c3"><b>3 · Los tres por igual</b> Los tres colores con el mismo peso que tienen en el mapa del árbol. Es la lectura más literal de lo que pediste; mirá si el naranja le quita protagonismo al logo.</p><p class="notac" data-notac="c0" hidden><b>Como está hoy</b> Cian y verde, sin relación con los alcances. Sirve para comparar.</p>
+</div>
+
+<div class="col v3" id="col">
+  <div class="topnav">
+    <button type="button" class="marca" id="irInicio" title="Ir al inicio"><svg viewBox="0 0 100 100" width="24" height="24" aria-hidden="true">{{LOGO}}</svg><span class="wm" style="font-size:14px"><span class="o">W</span>hat<span class="c">M</span>atters</span></button>
+    <button type="button" class="chip" id="tema" aria-pressed="false">Modo claro</button>
+  </div>
+
+  <div class="hero" id="hero">
+    <svg viewBox="0 0 100 100" role="img" aria-label="Logo de WhatMatters">{{LOGO}}</svg>
+    <span class="wm"><span class="o">W</span>hat<span class="c">M</span>atters</span>
+    <span class="sub">Lo que importa</span>
+  </div>
+
+  <section class="vista" data-vista="inicio">
+    <div class="card">
+      <h2 class="lema">Un juego serio y emocionante<br class="m"> que entrena nuestra habilidad<br> para ponernos de acuerdo<br class="m"> en lo importante.</h2>
+      <div class="puertas">
+        <button type="button" data-ir="juego">Ver cómo funciona</button>
+        <button type="button" data-ir="red">Ver la red</button>
+        <button type="button" class="pri" data-ir="entrar">Entrar</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="vista" data-vista="juego" hidden>
+    <div class="card">
+      <h2>Cómo funciona</h2>
+      <ul>
+        <li>Se requiere una invitación para empezar y que te importe algún tema.</li>
+        <li>Se juega formando "árboles" y "bosques" que crecen multiplicando por tres.</li>
+        <li>Se recompensa a quienes logran los mayores y mejores acuerdos.</li>
+      </ul>
+      <p style="color:var(--muted);font-size:13px">Cada árbol nace de una semilla de tres personas que acuerdan su nombre. Cada una abre después su propia tríada, y así el árbol crece.</p>
+      <p style="color:var(--muted);font-size:13px">Todo está a la vista: cualquiera ve todos los árboles, con los nombres, lo que le importa a cada quien y sus posiciones. Los correos no se muestran.</p>
+      <div class="btns"><button type="button" class="ghost" data-ir="inicio">Volver al inicio</button><button type="button" data-ir="entrar">Entrar</button></div>
+    </div>
+  </section>
+
+  <section class="vista" data-vista="red" hidden>
+    <div class="card">
+      {{RED}}
+      <div class="btns"><button type="button" class="ghost" data-ir="inicio">Volver al inicio</button><button type="button" data-ir="entrar">Entrar</button></div>
+    </div>
+  </section>
+
+  <section class="vista" data-vista="entrar" hidden>
+    <div class="card">
+      <h2>Entrar a la red</h2>
+      <p style="color:var(--muted)">Si ya estás en la red, con tu correo te mandamos un botón para entrar. Si te invitaron, el botón está en el correo de invitación.</p>
+      <label class="campo" for="correo">Correo<input id="correo" type="email" autocomplete="email"></label>
+      <button type="button" class="boton">Enviarme el correo para entrar</button>
+      <div class="btns"><button type="button" class="ghost" data-ir="inicio">Volver al inicio</button></div>
+    </div>
+  </section>
+</div>
+
+<script>
+var escActual = 'C';
+function pintar() {
+  document.querySelectorAll('.esc').forEach(function (e) { e.hidden = e.dataset.esc !== escActual; });
+  document.querySelectorAll('.nota').forEach(function (n) { n.hidden = n.dataset.nota !== escActual; });
+}
+var tema = document.getElementById('tema');
+function esOscuro() {
+  var t = document.documentElement.getAttribute('data-theme');
+  if (t) return t === 'dark';
+  return window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
+}
+function rotularTema() {
+  var osc = esOscuro();
+  tema.textContent = osc ? 'Modo claro' : 'Modo oscuro';
+  tema.setAttribute('aria-pressed', String(!osc));
+}
+tema.addEventListener('click', function () {
+  document.documentElement.setAttribute('data-theme', esOscuro() ? 'light' : 'dark');
+  rotularTema();
+});
+var solo = document.getElementById('solo'), col = document.getElementById('col');
+solo.addEventListener('click', function () {
+  var on = solo.getAttribute('aria-pressed') !== 'true';
+  solo.setAttribute('aria-pressed', String(on));
+  col.hidden = on;
+});
+
+var fondo = document.getElementById('fondo');
+document.querySelectorAll('[data-col]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    fondo.classList.remove('c0', 'c1', 'c2', 'c3');
+    fondo.classList.add(b.dataset.col);
+    document.querySelectorAll('[data-col]').forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+    document.querySelectorAll('.notac').forEach(function (n) { n.hidden = n.dataset.notac !== b.dataset.col; });
+  });
+});
+var panelarbol = document.getElementById('panelarbol');
+document.querySelectorAll('[data-pt]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    panelarbol.classList.remove('d1', 'd2', 'd3');
+    panelarbol.classList.add(b.dataset.pt);
+    document.querySelectorAll('[data-pt]').forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+  });
+});
+function irA(v) {
+  document.querySelectorAll('.vista').forEach(function (s) { s.hidden = s.dataset.vista !== v; });
+  document.getElementById('hero').hidden = v !== 'inicio';
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll('[data-ir]').forEach(function (b) { b.addEventListener('click', function () { irA(b.dataset.ir); }); });
+document.getElementById('irInicio').addEventListener('click', function () { irA('inicio'); });
+{{REDJS}}
+pintar(); rotularTema();
+</script>

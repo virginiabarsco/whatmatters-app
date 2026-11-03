@@ -1,0 +1,63 @@
+const { chromium } = require('playwright');
+const SHOT = (n) => __dirname + '/capturas/' + n + '.png';
+(async () => {
+  const b = await chromium.launch();
+  const page = await b.newPage({ viewport: { width: 390, height: 900 } });
+  page.on('pageerror', e => console.log('PAGEERR', e.message));
+  await page.goto('file://' + __dirname + '/harness.html'); await page.waitForTimeout(500);
+  const ev = (f, a) => page.evaluate(f, a);
+  await ev(() => {
+    window.T = {};
+    window.login = function (mail) { __clearWait(); pedirCodigo(mail); var m = __mails[__mails.length - 1]; return (T[mail] = entrarConEnlace(m.body.match(/acc=([a-f0-9]{40})/)[1]).token); };
+    window.tryit = function (f) { try { var r = f(); return r === undefined ? 'ok' : JSON.stringify(r); } catch (e) { return 'ERR: ' + e.message; } };
+    window.lastMail = function () { var m = __mails[__mails.length - 1]; return m.to + ' | ' + m.subject; };
+    window.ped = function () { return readPedidos_().map(function (q) { return q.nombre + ':' + q.estado + ':' + q.lugar + ':' + q.asignado; }); };
+    login('v@x.com'); login('w@x.com'); login('m@x.com');
+    proponerTema(T['v@x.com'], 't1', 'Confianza que se construye', 'Temático', ''); acordarTema(T['w@x.com'], 't1'); acordarTema(T['m@x.com'], 't1');
+    window.T2 = plantarArbol(T['w@x.com'], 'a@x.com', 'b@x.com').arbol;
+    var k = Object.keys(__props).find(k => k.startsWith('inv_') && inviteFrom_(k.slice(4)).correo === 'a@x.com').slice(4);
+    T['a@x.com'] = aceptarInvitacion(k, 'Ana', 'agua').token;
+  });
+  console.log('1 anon request:', await ev(() => tryit(() => pedirSumarme('', 't1', 'Zoe', 'z@x.com', 'música', 'Me interesa la confianza')), ), '|', await ev(() => lastMail()));
+  console.log('  dup:', await ev(() => tryit(() => pedirSumarme('', 't1', 'Zoe', 'z@x.com', 'música', ''))));
+  console.log('  member of t1 asks:', await ev(() => tryit(() => pedirSumarme(T['w@x.com'], 't1', '', '', '', ''))));
+  console.log('  visible before confirm:', await ev(() => getState(T['v@x.com'], '', 't1').pedidos.length));
+  console.log('2 confirm:', await ev(() => { var m = __mails[__mails.length - 2].body.match(/conf=([a-f0-9]{40})/); m = m || __mails.filter(x => /conf=/.test(x.body)).pop().body.match(/conf=([a-f0-9]{40})/); return tryit(() => confirmarPedido(m[1])); }), '|', await ev(() => lastMail()));
+  const st = await ev(() => { var s = getState(T['v@x.com'], '', 't1'); return { p: s.pedidos, libres: s.libres.map(l => l.pos + '/' + l.dueno) }; });
+  console.log('3 P1 sees:', JSON.stringify(st.p.map(q => q.nombre + ' ' + q.estado + ' soyP1=' + q.soyP1)), 'libres', JSON.stringify(st.libres));
+  console.log('  w sees (no email in state):', await ev(() => JSON.stringify(getState(T['w@x.com'], '', 't1').pedidos)).then(s => s.indexOf('@') < 0 ? 'ok, sin correos' : 'LEAK ' + s));
+  console.log('4 non-P1 assigns:', await ev(() => tryit(() => asignarPedido(T['w@x.com'], readPedidos_()[0].id, '2.2'))));
+  console.log('  P1 assigns to 2.2 (w):', await ev(() => tryit(() => asignarPedido(T['v@x.com'], readPedidos_()[0].id, '2.2'))), '|', await ev(() => lastMail()));
+  console.log('  w sees soyAsignada:', await ev(() => getState(T['w@x.com'], '', 't1').pedidos[0].soyAsignada));
+  console.log('  m tries invite:', await ev(() => tryit(() => invitarPedido(T['m@x.com'], readPedidos_()[0].id))));
+  console.log('5 w invites:', await ev(() => tryit(() => invitarPedido(T['w@x.com'], readPedidos_()[0].id))), '|', await ev(() => lastMail()), '|', await ev(() => JSON.stringify(ped())));
+  console.log('6 logged-in Ana asks t1:', await ev(() => tryit(() => pedirSumarme(T['a@x.com'], 't1', '', '', '', 'Desde Agua'))), '|', await ev(() => lastMail()));
+  console.log('  Ana state t1:', await ev(() => { var s = getState(T['a@x.com'], '', 't1'); return 'miPedido=' + s.miPedido + ' puedoPedir=' + s.puedoPedir; }));
+  console.log('  P1 invites Ana to own 1.2:', await ev(() => { var q = readPedidos_().find(x => x.nombre === 'Ana'); return tryit(() => asignarPedido(T['v@x.com'], q.id, '1.2')); }), '|', await ev(() => lastMail()));
+  console.log('7 devolver/cerrar:', await ev(() => {
+    pedirSumarme('', 't1', 'Yago', 'y@x.com', 'cine', ''); var c = __mails.filter(x => /conf=/.test(x.body)).pop().body.match(/conf=([a-f0-9]{40})/)[1]; confirmarPedido(c);
+    var q = readPedidos_().find(x => x.nombre === 'Yago'); asignarPedido(T['v@x.com'], q.id, '3.2');
+    var r1 = tryit(() => devolverPedido(T['m@x.com'], q.id)); var r2 = tryit(() => cerrarPedido(T['v@x.com'], q.id));
+    return r1 + ' / ' + r2 + ' / ' + JSON.stringify(ped());
+  }));
+  // UI
+  await ev(() => { TOKEN = ''; ARBOL = 't1'; LAST_STATE = ''; SUMAR = false; VISTA = 'red'; return load(); }); await page.waitForTimeout(300);
+  await page.click('#sumarSi'); await page.waitForTimeout(100);
+  await page.screenshot({ path: SHOT('j1-sumarme') });
+  await page.click('details.otros > summary'); await page.waitForTimeout(100);
+  await page.fill('#tq', 'agua'); await page.waitForTimeout(50);
+  console.log('search agua visible:', await ev(() => Array.from(document.querySelectorAll('#tlistAll .titem')).filter(i => !i.hidden).length));
+  await page.fill('#tq', ''); await page.fill('#tq', 'confi'); await page.waitForTimeout(50);
+  console.log('search confi visible:', await ev(() => Array.from(document.querySelectorAll('#tlistAll .titem')).filter(i => !i.hidden).map(i => i.textContent.slice(0, 30))));
+  await page.fill('#tq', '');
+  await ev(() => { document.querySelector('details.otros').scrollIntoView(); });
+  await page.screenshot({ path: SHOT('j2-desplegable') });
+  // P1 view with a pending request
+  await ev(() => { pedirSumarme('', 't1', 'Lía', 'l@x.com', 'teatro', 'Hola, me gustaría sumarme'); var c = __mails.filter(x => /conf=/.test(x.body)).pop().body.match(/conf=([a-f0-9]{40})/)[1]; confirmarPedido(c);
+    TOKEN = T['v@x.com']; lsSet('wm_red_token', TOKEN); ARBOL = 't1'; LAST_STATE = ''; return load(); });
+  await page.waitForTimeout(400);
+  await ev(() => { document.querySelector('.pedidos').scrollIntoView(); });
+  await page.screenshot({ path: SHOT('j3-pedidos') });
+  console.log('ERRS', await ev(() => JSON.stringify(window.__errors || [])));
+  await b.close();
+})();

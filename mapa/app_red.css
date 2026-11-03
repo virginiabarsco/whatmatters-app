@@ -1,0 +1,91 @@
+.muted{ color: var(--muted); }
+.small{ font-size: 13px; }
+.tabs{ display: inline-flex; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); justify-self: start; }
+.tabs button{ background: none; color: var(--ink); border: 0; border-radius: 0; min-height: 40px; padding: 8px 18px; font-weight: 400; border-right: 1px solid var(--line); }
+.tabs button:last-child{ border-right: 0; }
+.tabs button[aria-selected="true"]{ background: var(--ink); color: var(--bg); font-weight: 700; }
+.sheet-wrap{ overflow: auto; max-height: 72vh; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+table.sheet{ border-collapse: separate; border-spacing: 0; font-size: 14px; min-width: max-content; }
+.sheet th, .sheet td{ border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 5px 9px; white-space: nowrap; text-align: left; vertical-align: middle; }
+.sheet thead th{ position: sticky; top: 0; z-index: 1; background: var(--bg); font-family: var(--display); font-size: 14px; }
+.sheet td.pos{ color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.sheet td.nm{ min-width: 110px; }
+.sheet .a0{ background: color-mix(in srgb, var(--bg) 55%, var(--surface)); }
+.sheet thead th.a0{ background: color-mix(in srgb, var(--bg) 80%, var(--line)); }
+.sheet tr.b1 td{ border-top: 2px solid var(--ink); }
+.sheet tr.b2 td{ border-top: 1.5px solid var(--muted); }
+.sdot{ display: inline-block; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--ink); margin-right: 6px; vertical-align: -1px; }
+.sinv{ color: var(--sap); font-weight: 700; font-size: 13px; }
+.sadd{ background: var(--leaf-soft); color: var(--leaf); border: 1.5px dashed var(--leaf); border-radius: 8px; min-height: 30px; padding: 2px 10px; font-size: 13px; }
+.lfilt{ display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); justify-self: start; }
+.lfilt button{ background: none; color: var(--ink); border: 0; border-radius: 0; border-right: 1px solid var(--line); min-height: 36px; padding: 6px 12px; font-size: 14px; font-weight: 400; }
+.lfilt button:last-child{ border-right: 0; }
+.lfilt button small{ color: var(--muted); font-size: 12px; }
+.lfilt button[aria-pressed="true"]{ background: var(--ink); color: var(--bg); font-weight: 700; }
+.lfilt button[aria-pressed="true"] small{ color: inherit; opacity: .75; }
+.ltools{ display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.lme{ background: var(--surface); color: var(--ink); border: 1px solid var(--line); min-height: 36px; padding: 6px 12px; font-size: 14px; }
+.sheet .fix{ position: sticky; z-index: 1; }
+.sheet td.pos.fix{ left: 0; min-width: 64px; }
+.sheet td.nm.fix{ left: 64px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; box-shadow: 2px 0 0 var(--line); }
+.sheet thead th.fix{ left: 0; z-index: 3; box-shadow: 2px 0 0 var(--line); }
+.sheet td.fix{ background: var(--surface); }
+.sheet td.fix.a0{ background: color-mix(in srgb, var(--bg) 55%, var(--surface)); }
+@media (max-width: 520px){.sheet td.nm.fix{ max-width: 104px; }.sheet td.nm{ min-width: 96px; }.sheet th, .sheet td{ padding: 5px 7px; }}
+.fold{ background: none; color: var(--muted); border: 1px solid var(--line); border-radius: 5px; min-height: 0; width: 18px; height: 18px; padding: 0; margin-right: 5px; font-size: 13px; line-height: 15px; font-weight: 700; vertical-align: 1px; }
+.sheet tr.flash td{ background: var(--sap-soft) !important; transition: background .6s; }
+.search{ position: relative; }
+.search input{ padding: 9px 12px; }
+.sres[hidden]{ display: none; }
+.sres{ position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 4px; display: grid; box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+.sres button{ background: none; color: var(--ink); border: 0; border-radius: 8px; min-height: 40px; padding: 6px 10px; text-align: left; font-weight: 400; }
+.sres button:hover, .sres button:focus-visible{ background: var(--bg); }
+.pname{ background: none; border: 0; color: var(--ink); padding: 0; min-height: 0; font: inherit; font-weight: 400; text-align: left; cursor: pointer; }
+.pname:hover{ text-decoration: underline; }
+.tbar{ display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; text-align: left; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 8px 14px; min-height: 52px; font-weight: 400; }
+.tbar .k{ display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.tbar .v{ display: block; font-family: var(--display); font-weight: 700; font-size: 17px; }
+.tdesc{ display: grid; gap: 6px; }
+.tag{ display: inline-block; font-size: 12px; border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; }
+.tag.semilla{ background: var(--sap-soft); border-color: var(--sap-soft); font-weight: 700; }
+.tag.arbol{ background: var(--leaf-soft); border-color: var(--leaf-soft); font-weight: 700; }
+.tlist{ display: grid; gap: 8px; }
+.tcard{ display: grid; gap: 4px; text-align: left; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font-weight: 400; }
+.tcard.cur{ border: 2px solid var(--ink); background: var(--surface); }
+.tcard.mini{ padding: 8px 12px; gap: 2px; }
+.tcard.mini b{ font-size: 16px; }
+.tbar.ajeno{ border-style: dashed; }
+.tcard b{ font-family: var(--display); font-size: 17px; }
+.tcard .row{ display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+details.otros{ background: var(--ink); color: var(--bg); border-radius: 16px; margin-top: 6px; overflow: hidden; }
+details.otros > summary{ display: flex; align-items: center; gap: 10px; padding: 14px 16px; cursor: pointer; list-style: none; }
+details.otros > summary::-webkit-details-marker{ display: none; }
+details.otros > summary::after{ content: '▾'; margin-left: auto; transition: transform .2s; }
+details.otros[open] > summary::after{ transform: rotate(180deg); }
+details.otros .otit{ font-family: var(--display); font-weight: 700; font-size: 18px; }
+details.otros .ocount{ font-size: 13px; border: 1px solid currentColor; border-radius: 999px; padding: 0 8px; opacity: .8; }
+details.otros .oicon{ display: inline-flex; }
+details.otros .obody{ background: var(--bg); color: var(--ink); padding: 12px; display: grid; gap: 10px; border: 1px solid var(--ink); border-top: 0; border-radius: 0 0 16px 16px; }
+.titem[hidden]{ display: none; }
+.titem{ display: grid; gap: 8px; }
+.titem > .tcard{ width: 100%; }
+details.otros summary{ cursor: pointer; list-style-position: inside; }
+button.ghost, .pick button, .lme{ background: transparent; color: var(--ink); border-color: var(--edge); box-shadow: none; font-family: var(--body); font-weight: 700; letter-spacing: 0; }
+button.link, .xlink, .pname, .fold, .sres button, .tabs button, .lfilt button, .tool, .tcard, .tbar, .chip, .sadd{ box-shadow: none; font-family: var(--body); letter-spacing: 0; }
+.triad, .tree-wrap, .map, .sheet-wrap, .sres, .tbar, .tcard, .tabs, .lfilt, .tool, .pick{ border-radius: 3px; }
+.map, .sheet-wrap, .tabs, .lfilt{ border-color: var(--edge); }
+.tabs button[aria-selected="true"], .lfilt button[aria-pressed="true"]{ background: var(--accent); color: var(--on-accent); }
+.tcard{ border-color: var(--edge); }
+.tcard.cur{ border: 2px solid var(--accent); box-shadow: var(--glow); }
+.tag{ border-radius: 2px; }
+.tag.arbol{ color: var(--leaf); }
+.tag.semilla{ color: var(--sap); }
+details.otros{ background: var(--accent-soft); color: var(--ink); border: 1px solid var(--accent); border-radius: 0; box-shadow: var(--glow); clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%); }
+details.otros > summary{ color: var(--accent); }
+details.otros .otit{ font-weight: 600; letter-spacing: .14em; text-transform: uppercase; font-size: 16px; color: var(--ink); }
+details.otros .obody{ border: 0; border-top: 1px solid var(--accent); border-radius: 0; }
+button, input, select, textarea, .tcard, .tbar, .tabs, .lfilt, .tool, .chip, .sres, .map, .sheet-wrap, details.otros, .triad, .pick{ text-shadow: none; }
+.tcard, .tbar, .tabs, .lfilt, .tool, .chip, .sres, .triad, .pick{ background: color-mix(in srgb, var(--surface) 78%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.tabs button, .lfilt button{ background: none; }
+.tabs button[aria-selected="true"], .lfilt button[aria-pressed="true"]{ background: var(--accent); }
+details.otros .obody{ background: color-mix(in srgb, var(--bg) 86%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
