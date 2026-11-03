@@ -1,6 +1,6 @@
 # WhatMatters · nota de traspaso
 
-Para retomar el trabajo en una conversación nueva. Última actualización: 3 de noviembre de 2026 (bloque 1 publicado).
+Para retomar el trabajo en una conversación nueva. Última actualización: 3 de noviembre de 2026 (bloques 1 y 1b publicados, versión 49).
 
 ## Cómo trabajamos
 
@@ -26,14 +26,14 @@ Para retomar el trabajo en una conversación nueva. Última actualización: 3 de
 
 ## Estado al cierre
 
-- **Principal y prueba:** versión 48 = este repositorio (`app/`). Incluye el bloque 1 (ver abajo) sobre el diseño anterior: inicio con tres puertas, "Ver la red" con desplegable de árboles + mapa + lista, fondo de Montevideo con datos abiertos, modo claro/oscuro.
+- **Principal y prueba:** versión 49 = este repositorio (`app/`). Incluye los bloques 1 y 1b (ver abajo) sobre el diseño anterior: inicio con tres puertas, "Ver la red" con desplegable de árboles + mapa + lista, fondo de Montevideo con datos abiertos, modo claro/oscuro.
 - **Migración hecha** (3 nov 2026): en la planilla "Invitada" pasó a "Convocada" (Personas y Quieren sumarse) y las columnas se llaman "Convocó (posición)" y "Fecha de convocatoria". El código sigue leyendo "Invitada" por si aparece alguna fila vieja.
-- **Pendiente:** ejecutar `ordenarPlanilla` desde el editor para reescribir la hoja "Cómo se juega". Se decidió hacerlo **después del bloque 2**, para no hacerlo dos veces; la hoja todavía muestra el texto viejo (lema "entrena", "invitación"). Antes, repasar con Opus el texto de la hoja: hay filas que contradicen reglas del bloque 2 (Árbol, Tríadas siguientes, Nombre del árbol/tipo, vencimiento de convocatorias), "Alcance" usa la palabra "nivel", faltan los estados de posición, el estado del árbol dice "tema" en vez de "nombre", y conviene separar lo del juego de lo de las pestañas. En el editor el selector de funciones sí respondió esta vez: se abre, se baja la lista y se elige la función.
+- **Pendiente:** ejecutar `ordenarPlanilla` desde el editor para reescribir la hoja "Cómo se juega". Se decidió hacerlo **después del bloque 2**, para no hacerlo dos veces; la hoja todavía muestra el texto viejo (lema "entrena", "invitación"). Antes, repasar con Opus el texto de la hoja: hay filas que contradicen reglas del bloque 2 (Árbol, Tríadas siguientes, Nombre del árbol/tipo, vencimiento de convocatorias), "Alcance" usa la palabra "nivel", faltan los estados de posición, el estado del árbol dice "tema" en vez de "nombre", y conviene separar lo del juego de lo de las pestañas. En el editor, el selector de funciones: abrirlo y elegir la opción con la herramienta de búsqueda de elementos (find + clic por referencia); hacer scroll dentro de la lista congeló la pestaña.
 - Regla de texto: todo con mayúscula inicial en etiquetas y leyendas. La regla 1 del texto de bienvenida ("Se requiere una invitación para empezar") se deja como está.
 
-## Cambios listos sin publicar (bloque 1b, en la copia local)
+## Bloque 1b · tema del árbol y textos de convocatoria (IMPLEMENTADO y publicado, versión 49)
 
-Acordados el 3 nov 2026 y probados en el simulador (regresión sin errores):
+Acordados y publicados el 3 nov 2026. La migración de columnas de Árboles ya se ejecutó.
 
 1. Correo de convocatoria: "X te convocó a su tríada semilla de un árbol nuevo de WhatMatters, en la posición N." + "El tema de este árbol lo acuerdan las tres personas de la semilla." / con tema: "X te convocó a su tríada del árbol «T» de WhatMatters, en la posición N." Después: "Con el botón podés ver la convocatoria." Se sacaron "Si es tu primera vez…" y "Este enlace es personal…".
 2. Página de aceptar: título "X te convocó a su tríada"; párrafo "Es la tríada semilla de un árbol nuevo de WhatMatters. Vas a ocupar la posición N con el correo C. El tema de este árbol lo acuerdan las tres personas de la semilla." Si ya está en otro árbol: "Ya estás en otro árbol, así que entrás con los mismos datos que ya están en tu perfil."
@@ -41,7 +41,7 @@ Acordados el 3 nov 2026 y probados en el simulador (regresión sin errores):
 4. Árbol: **tema** en lugar de nombre en toda la app (inventario de 21 puntos aprobado). Acordar el tema es **de cero**: sin propuesta inicial, campo vacío, lo que importa a cada persona de la semilla se ve como texto. Debajo del título de la tarjeta: "El tema es lo que importa a quienes forman el árbol."
 5. Ayuda de Lo que importa: "Al menos una palabra, luego se puede cambiar o ampliar. Puede ser cualquier tema: una idea, una causa, un lugar…"
 6. "Ver cómo funciona": la puerta se queda, pero solo muestra "Este espacio está en proceso de redacción. Las dudas y los comentarios son bienvenidos por correo a whatmatters.pro@gmail.com." El texto anterior (reglas, semilla, avisos de privacidad) queda para revisar junto con la hoja "Cómo se juega".
-7. Planilla: columnas de Árboles "Nombre" → "Tema" y "Propuesta: nombre" → "Propuesta: tema". **Después de publicar, ejecutar migrarConvocadas desde el editor** (hace las dos migraciones; se puede repetir).
+7. Planilla: columnas de Árboles "Nombre" → "Tema" y "Propuesta: nombre" → "Propuesta: tema" (hecho con migrarConvocadas, que hace las dos migraciones y se puede repetir).
 8. Código: etiquetas internas acordes al vocabulario: el árbol tiene `tema` (y `titulo` para lo que se muestra, que puede ser "Semilla de…"), la persona `loQueImporta`, la convocatoria `arbolTema`; el modo claro/oscuro se llama `modo`.
 
 Pendientes nuevos:
@@ -113,7 +113,7 @@ Requiere Node con Playwright y Chromium.
 
 ## Cómo publicar en Apps Script (con Claude en Chrome)
 
-Atajo que funcionó el 3 nov: subir el código a una rama temporal del repositorio y, desde la consola del editor, leerlo con `fetch` de `raw.githubusercontent.com` (funciona desde la página del editor), para no pasar los archivos por la conversación. Hace falta activar "Permitir salida a la red" en Configuración > Capacidades. La lista de versiones del diálogo de implementaciones puede no mostrar la versión recién creada: recargar el editor y volver a abrir el diálogo. Pasos completos:
+Atajo que funcionó el 3 nov: subir el código a una rama temporal del repositorio y, desde la consola del editor, leerlo con `fetch` de `raw.githubusercontent.com` (funciona desde la página del editor), para no pasar los archivos por la conversación. Hace falta activar "Permitir salida a la red" en Configuración > Capacidades. La lista de versiones del diálogo de implementaciones puede no mostrar la versión recién creada: recargar el editor y volver a abrir el diálogo. Mejor aún: subir los cambios directo a `main` y leerlos desde el editor con la dirección del envío (`raw.githubusercontent.com/…/<commit>/app/…`), así no quedan ramas temporales (desde aquí no se pueden borrar ramas). Pasos completos:
 
 1. Abrir el editor. Con JavaScript, agregar un `<input type="file">` oculto (aria-label "wm upload") que guarde el texto del archivo en `window.__wmfile`.
 2. Subir el archivo con la herramienta de subida (la ruta tiene que estar bajo el directorio de trabajo).
