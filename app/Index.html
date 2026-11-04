@@ -707,7 +707,7 @@ function mdraw() {
     var want = act || can || yo || detail || (MSEL && MSEL.type === 'p' && MSEL.pid === pid);
     if (!want) return;
     var idTxt = act ? 'P' + pid : '', txt = act ? shortName(M.people[pid]) + (yo ? ' (vos)' : '') : can ? 'Convocar' : 'P' + pid + (inv ? ' · Convocada' : '');
-    LB.push({ x: s[0], y: s[1], o: p.out || 0, gap: yo || can ? 18 : 14, txt: txt, id: idTxt, cls: act ? '' : can ? ' can' : ' free', dim: dim, pri: yo ? 0 : act ? 1 : can ? 2 : 3 });
+    LB.push({ x: s[0], y: s[1], o: p.out || 0, gap: yo || can ? 18 : 14, txt: txt, id: idTxt, cls: act ? '' : can ? ' can' : ' free', dim: dim, pri: yo ? 0 : act ? 1 : can ? 2 : 3, col: can ? ca : '' });
   }
   // Ubica cada etiqueta donde no pise a otra: primero hacia afuera, si no a los costados, arriba o abajo.
   function placeLabels() {
@@ -728,7 +728,7 @@ function mdraw() {
       if (clash && L.pri >= 2) return; // un "P…" o "Convocar" que no entra se omite; los nombres siempre se muestran
       boxes.push(best.box);
       if (L.id) labels += '<text class="lbl pid"' + L.dim + ' x="' + best.lx.toFixed(1) + '" y="' + (best.ly - 6.5).toFixed(1) + '" text-anchor="' + best.anchor + '">' + esc(L.id) + '</text>';
-      labels += '<text class="lbl' + L.cls + '"' + L.dim + ' x="' + best.lx.toFixed(1) + '" y="' + (best.ly + (L.id ? 5.5 : 0)).toFixed(1) + '" text-anchor="' + best.anchor + '">' + esc(L.txt) + '</text>';
+      labels += '<text class="lbl' + L.cls + '"' + (L.col ? ' style="fill:' + L.col + '"' : '') + L.dim + ' x="' + best.lx.toFixed(1) + '" y="' + (best.ly + (L.id ? 5.5 : 0)).toFixed(1) + '" text-anchor="' + best.anchor + '">' + esc(L.txt) + '</text>';
     });
   }
   function visit(b) {
@@ -780,7 +780,7 @@ function triName(b) { return b === '' ? ((S.alcanzado || 0) >= 2 ? 'Tríada base
 function mcard() {
   var c = $('#mcard'); if (!c) return;
   if (!MSEL) {
-    c.innerHTML = '<span class="small muted">' + (M.invitables ? 'Tenés ' + M.invitables + (M.invitables === 1 ? ' posición por convocar' : ' posiciones por convocar') + ': son los círculos verdes con +. Al tocar uno se puede convocar.' : 'Al tocar a una persona se ven sus tríadas; al tocar un triángulo, quiénes lo forman.') + '</span>';
+    c.innerHTML = '<span class="small muted">' + (M.invitables ? 'Tenés ' + M.invitables + (M.invitables === 1 ? ' posición por convocar' : ' posiciones por convocar') + '. Podés hacerlo tocando los círculos punteados con +.' : 'Al tocar a una persona se ven sus tríadas; al tocar un triángulo, quiénes lo forman.') + '</span>';
     bind(); return;
   }
   var h = '';
