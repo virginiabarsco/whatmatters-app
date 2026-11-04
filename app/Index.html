@@ -431,7 +431,7 @@ function load() {
     if (TOKEN && !S.yo) { TOKEN = ''; lsSet('wm_red_token', ''); }
     if (PROPIO && S.yo) {
       PROPIO = false;
-      var propio = S.arboles.filter(function (t) { return !t.ajeno && t.estado === 'Activa'; })[0];
+      var propio = S.arboles.filter(function (t) { return !t.ajeno && t.estado === 'Aceptada'; })[0];
       if (!S.me && propio && !INV) return switchTree(propio.id);
     }
     render();
@@ -439,8 +439,8 @@ function load() {
 }
 
 function member(l) {
-  var cls = l.estado === 'Activa' ? 'act' : l.estado === 'Convocada' ? 'inv' : 'free';
-  var name = l.estado === 'Activa' ? esc(l.nombre) + (l.yo ? ' (vos)' : '') : l.estado === 'Convocada' ? 'Convocada' + (l.correo ? ': ' + esc(l.correo) : '') : 'Posición por convocar';
+  var cls = l.estado === 'Aceptada' ? 'act' : l.estado === 'Convocada' ? 'inv' : 'free';
+  var name = l.estado === 'Aceptada' ? esc(l.nombre) + (l.yo ? ' (vos)' : '') : l.estado === 'Convocada' ? 'Convocada' + (l.correo ? ': ' + esc(l.correo) : '') : 'Posición por convocar';
   var h = '<div class="member ' + cls + (l.yo ? ' yo' : '') + '"' + (cls === 'act' ? ' style="--c:' + colorOf(l.pid) + '"' : '') + '><span class="dot"></span><span class="name">' + name + '</span><span class="pos">' + l.pos + '</span></div>';
   if (l.puedoInvitar) h += '<form class="inv" data-inv="' + l.pos + '"><input type="email" placeholder="Correo para convocar" aria-label="Correo para la posición ' + l.pos + '" required><button type="submit">Convocar</button></form>';
   if (l.mia) h += '<div class="small"><button class="link" style="color:var(--ink)" data-resend="' + l.pos + '">Reenviar convocatoria</button> · <button class="link" data-cancel="' + l.pos + '">Cancelar</button></div>';
@@ -460,7 +460,7 @@ function puertasHtml() {
 }
 function redCabeza() {
   var n = (S.arboles || []).length;
-  return '<div class="card"><h2>La red hoy</h2><div class="cifras"><span><b>' + num(S.redPersonas || 0) + '</b> ' + (S.redPersonas === 1 ? 'persona' : 'personas') + '</span><span><b>' + n + '</b> ' + (n === 1 ? 'árbol' : 'árboles') + '</span></div></div>';
+  return '<div class="card"><h2>La red hoy</h2><div class="cifras"><span><b>' + num(S.redPersonas || 0) + '</b> ' + (S.redPersonas === 1 ? 'persona' : 'personas') + ' en <b>' + num(S.redPosiciones || 0) + '</b> ' + (S.redPosiciones === 1 ? 'posición' : 'posiciones') + '</span><span><b>' + n + '</b> ' + (n === 1 ? 'árbol' : 'árboles') + '</span></div></div>';
 }
 var VISTA = 'inicio';
 function irA(v) { VISTA = v; PERFIL = false; RENAME = null; if (v === 'red') OTROS = true; render(); window.scrollTo(0, 0); }
@@ -487,7 +487,7 @@ function loginCard() {
     h += '<form id="mailForm" style="display:grid;gap:10px"><label>Correo<input id="mailIn" type="email" autocomplete="email" required value="' + esc(inv && inv.correo ? inv.correo : '') + '"></label><button type="submit">Enviarme el correo para entrar</button></form>';
     if (modoVisita()) h += '<div class="btns"><button type="button" class="ghost" data-ir="inicio">Volver al inicio</button></div>';
   } else {
-    h += '<h2>' + (LOGIN.necesitaNombre ? 'Ocupar tu posición' : 'Te mandamos un correo') + '</h2><p class="small muted">' + (LOGIN.necesitaNombre ? 'Te mandamos un correo a <b>' + esc(LOGIN.correo) + '</b>. Con el botón «Ocupar mi posición» del correo se entra directo; también se puede escribir acá el código de 6 dígitos que viene debajo, tu nombre y lo que te importa.' : 'Te mandamos un correo a <b>' + esc(LOGIN.correo) + '</b>. Con el botón «Entrar» del correo se entra directo; también se puede escribir acá el código de 6 dígitos que viene debajo.') + ' Si no aparece en unos minutos, puede estar en la carpeta de spam.</p>';
+    h += '<h2>' + (LOGIN.necesitaNombre ? 'Ocupar tu posición' : 'Te mandamos un correo') + '</h2><p class="small muted">' + (LOGIN.necesitaNombre ? 'Te mandamos un correo a <b>' + esc(LOGIN.correo) + '</b>. Con el botón «Ocupar mi posición» del correo se entra directo; también se puede escribir acá el código de 6 dígitos que viene debajo, tu nombre y Lo que importa.' : 'Te mandamos un correo a <b>' + esc(LOGIN.correo) + '</b>. Con el botón «Entrar» del correo se entra directo; también se puede escribir acá el código de 6 dígitos que viene debajo.') + ' Si no aparece en unos minutos, puede estar en la carpeta de spam.</p>';
     h += '<form id="codeForm" style="display:grid;gap:10px"><label>Código<input id="codeIn" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required></label>';
     if (LOGIN.necesitaNombre) h += '<label>Tu nombre <span class="small muted" style="font-weight:400">Así te va a ver el resto de la red.</span><input id="nameIn" autocomplete="name" required></label>' + LO_QUE_IMPORTA_FIELD;
     h += '<button type="submit">' + (LOGIN.necesitaNombre ? 'Ocupar mi posición (' + esc(LOGIN.pos) + ')' : 'Entrar') + '</button>';
@@ -587,10 +587,10 @@ function mgroup(b) {
 // Lo que el mapa necesita, sacado del estado que ya manda el servidor.
 function ADMIN() { return !!(S && S.yo && S.yo.admin); }
 function mapData() {
-  var d = { people: {}, invited: {}, lug: {}, open: {}, owner: {}, D: Math.max(1, S.alcances.length), me: S.me && S.me.estado === 'Activa' ? S.me.pos : '', invitables: 0 };
+  var d = { people: {}, invited: {}, lug: {}, open: {}, owner: {}, D: Math.max(1, S.alcances.length), me: S.me && S.me.estado === 'Aceptada' ? S.me.pos : '', invitables: 0 };
   S.alcances.forEach(function (a) { a.triadas.forEach(function (t) {
     d.open[t.base] = true; d.owner[t.base] = t.duenio;
-    t.lugares.forEach(function (l) { d.lug[l.pos] = l; if (l.estado === 'Activa') d.people[l.pid] = l.nombre; else if (l.estado === 'Convocada') d.invited[l.pid] = l; if (l.puedoInvitar) d.invitables++; });
+    t.lugares.forEach(function (l) { d.lug[l.pos] = l; if (l.estado === 'Aceptada') d.people[l.pid] = l.nombre; else if (l.estado === 'Convocada') d.invited[l.pid] = l; if (l.puedoInvitar) d.invitables++; });
   }); });
   return d;
 }
@@ -640,7 +640,7 @@ function mdraw() {
     // El color del punto es el del alcance por el que entró esa persona: el mismo
     // del triángulo del que es vértice. Así el punto dice algo que se lee sin explicación.
     // El color dice el alcance; el borde y el relleno dicen el estado de la posición:
-    // ocupado = borde oscuro y relleno de color · convocada = borde oscuro y hueco · por convocar = solo aro de color.
+    // aceptada = borde oscuro y relleno de color · convocada = borde oscuro y hueco · por convocar = solo aro de color.
     var ca = scaleColor(mlen(pid));
     if (act) dots += '<circle' + dim + ' cx="' + x + '" cy="' + y + '" r="' + (detail ? 6.5 : 4.5) + '" fill="' + ca + '" stroke="var(--ink)" stroke-width="' + (detail ? 2 : 1.5) + '"/>';
     else if (inv) dots += '<circle' + dim + ' cx="' + x + '" cy="' + y + '" r="' + (detail ? 6 : 4.2) + '" fill="none" stroke="var(--ink)" stroke-width="' + (detail ? 2 : 1.5) + '"/>';
@@ -714,7 +714,7 @@ function mlegend() {
   for (var a = 1; a <= top; a++) h += '<span class="sw" style="--c:' + scaleColor(a) + '"><i></i><b>A' + a + '</b></span>';
   h += '<span>Alcance de las posiciones de cada árbol</span>';
   h += '<span>El color muestra el alcance y el borde muestra el estado de la posición</span>';
-  h += '<span><i style="background:' + scaleColor(1) + ';border:2px solid var(--ink)"></i>Ocupada</span>';
+  h += '<span><i style="background:' + scaleColor(1) + ';border:2px solid var(--ink)"></i>Aceptada</span>';
   h += '<span><i style="border:2px solid var(--ink)"></i>Convocada</span>';
   h += '<span><i style="border:2px solid ' + scaleColor(1) + '"></i>Por convocar</span>';
   if (M.invitables) h += '<span><i style="border:2px dashed ' + scaleColor(1) + '"></i>Podés convocar</span>';
@@ -824,7 +824,7 @@ function sheetName(slot) {
   if (slot === pid && l && l.puedoInvitar) return '<button type="button" class="sadd" data-openinv="' + slot + '">+ Convocar</button>';
   return '';
 }
-var LFILT = (function () { var v = lsGet('wm_lfilt'); return v === 'ocupadas' || v === 'convocadas' || v === 'porconvocar' ? v : 'todas'; })();
+var LFILT = (function () { var v = lsGet('wm_lfilt'); return v === 'ocupadas' ? 'aceptadas' : v === 'aceptadas' || v === 'convocadas' || v === 'porconvocar' ? v : 'todas'; })();
 var FOLD = {}; // grupos plegados, como agrupar filas en Excel
 var FLASH = '';
 function listHtml() {
@@ -833,8 +833,8 @@ function listHtml() {
   // Como en la hoja: todas las ramas con todos sus lugares hasta el último alcance, llenos o vacíos.
   (function gen(slot) { if (mlen(slot) >= D) { rows.push(slot); return; } slotsOf(slot).forEach(gen); })('');
   var full = function (r) { return !!M.people[pidOfSlot(r)]; };
-  var estadoDe = function (r) { var q = pidOfSlot(r); return M.people[q] ? 'ocupadas' : M.invited[q] ? 'convocadas' : 'porconvocar'; };
-  var cuenta = { ocupadas: 0, convocadas: 0, porconvocar: 0 };
+  var estadoDe = function (r) { var q = pidOfSlot(r); return M.people[q] ? 'aceptadas' : M.invited[q] ? 'convocadas' : 'porconvocar'; };
+  var cuenta = { aceptadas: 0, convocadas: 0, porconvocar: 0 };
   rows.forEach(function (r) { cuenta[estadoDe(r)]++; });
   var vis = rows.filter(function (r) { return LFILT === 'todas' || estadoDe(r) === LFILT; });
   // cuántas filas visibles tiene cada grupo (para saber cuáles se pueden plegar)
@@ -848,13 +848,13 @@ function listHtml() {
     if (!hide) shown.push(r);
   });
   var h = '<div class="ltools"><div class="lfilt" role="group" aria-label="Qué posiciones mostrar">' +
-    [['todas', 'Todas', rows.length], ['ocupadas', 'Ocupadas', cuenta.ocupadas], ['convocadas', 'Convocadas', cuenta.convocadas], ['porconvocar', 'Por convocar', cuenta.porconvocar]].map(function (f) {
+    [['todas', 'Todas', rows.length], ['aceptadas', 'Aceptadas', cuenta.aceptadas], ['convocadas', 'Convocadas', cuenta.convocadas], ['porconvocar', 'Por convocar', cuenta.porconvocar]].map(function (f) {
       return '<button type="button" data-lfilt="' + f[0] + '" aria-pressed="' + (LFILT === f[0]) + '">' + f[1] + ' <small>' + f[2] + '</small></button>';
     }).join('') + '</div>' + (M.me ? '<button type="button" class="lme" id="goMe">Ir a mí</button>' : '') + '</div>';
   h += '<div class="sheet-wrap"><table class="sheet"><thead><tr>';
   for (var a = 1; a <= D; a++) h += '<th colspan="2" class="a' + (a % 2) + (a === 1 ? ' fix' : '') + '">Alcance ' + a + '</th>';
   h += '</tr></thead><tbody>';
-  if (!shown.length) h += '<tr><td colspan="' + (2 * D) + '" class="nm">' + (LFILT === 'ocupadas' ? 'Todavía no hay posiciones ocupadas.' : LFILT === 'convocadas' ? 'No hay posiciones convocadas.' : 'No hay posiciones por convocar.') + '</td></tr>';
+  if (!shown.length) h += '<tr><td colspan="' + (2 * D) + '" class="nm">' + (LFILT === 'aceptadas' ? 'Todavía no hay posiciones aceptadas.' : LFILT === 'convocadas' ? 'No hay posiciones convocadas.' : 'No hay posiciones por convocar.') + '</td></tr>';
   var prev = null;
   shown.forEach(function (r) {
     var seg = r.split('.'), brk = 0;
@@ -946,7 +946,7 @@ function misArboles() {
       h += '<form id="plantForm" class="card" style="gap:10px"><h2>Plantar un árbol</h2><p class="small">Vas a ocupar la posición 1 de una semilla nueva y convocar a dos personas para las posiciones 2 y 3.</p>' +
         '<label>Posición 2<input id="pl2" type="email" placeholder="Correo de la persona" required></label>' +
         '<label>Posición 3<input id="pl3" type="email" placeholder="Correo de la persona" required></label>' +
-        '<p class="small muted">El tema del árbol no lo elige quien planta: lo acuerdan las tres personas de la semilla cuando entren. Esta semilla va a ocupar uno de tus tres árboles.</p>' +
+        '<p class="small muted">El tema del árbol lo acuerdan las tres personas de la semilla cuando entren. Esta semilla cuenta como uno de tus tres árboles.</p>' +
         '<div class="btns"><button type="submit">Plantar y convocar</button><button type="button" class="ghost" id="plantNo">Cancelar</button></div></form>';
     } else {
       h += '<button type="button" class="plant" id="plantSi">+ Plantar un árbol nuevo</button>';
@@ -1006,7 +1006,7 @@ function pedidosCard() {
 }
 function temaCard() {
   var a = S.arbol; if (!a || a.acordado) return '';
-  var h = '<div class="card tema"><h2>Acordar el tema del árbol</h2><p class="small muted">El tema es lo que importa a quienes forman el árbol.</p>';
+  var h = '<div class="card tema"><h2>Acordar el tema</h2><p class="small muted">El tema es Lo que importa a quienes forman el árbol.</p>';
   var mine = a.soySemilla && S.me ? S.me.pos : '';
   if (a.prop && !PROP) {
     h += '<div class="prop"><span class="small muted">Propuesta de ' + esc(a.prop.deNombre || 'P' + a.prop.de) + '</span><b class="n">' + esc(a.prop.tema) + '</b><span><span class="tag">' + esc(a.prop.tipo) + '</span></span>' + (a.prop.desc ? '<p class="small">Lugar: ' + esc(a.prop.desc) + '</p>' : '') + '</div>';

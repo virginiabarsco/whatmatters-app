@@ -1,6 +1,6 @@
 # WhatMatters · nota de traspaso
 
-Para retomar el trabajo en una conversación nueva. Última actualización: 3 de noviembre de 2026 (bloques 1 y 1b publicados, versión 49).
+Para retomar el trabajo en una conversación nueva. Última actualización: 4 de noviembre de 2026 (bloques 1 y 1b publicados, versión 49; **bloque 1c listo para publicar**).
 
 ## Cómo trabajamos
 
@@ -31,6 +31,29 @@ Para retomar el trabajo en una conversación nueva. Última actualización: 3 de
 - **Pendiente:** ejecutar `ordenarPlanilla` desde el editor para reescribir la hoja "Cómo se juega". Se decidió hacerlo **después del bloque 2**, para no hacerlo dos veces; la hoja todavía muestra el texto viejo (lema "entrena", "invitación"). Antes, repasar con Opus el texto de la hoja: hay filas que contradicen reglas del bloque 2 (Árbol, Tríadas siguientes, Nombre del árbol/tipo, vencimiento de convocatorias), "Alcance" usa la palabra "nivel", faltan los estados de posición, el estado del árbol dice "tema" en vez de "nombre", y conviene separar lo del juego de lo de las pestañas. En el editor, el selector de funciones: abrirlo y elegir la opción con la herramienta de búsqueda de elementos (find + clic por referencia); hacer scroll dentro de la lista congeló la pestaña.
 - Regla de texto: todo con mayúscula inicial en etiquetas y leyendas. La regla 1 del texto de bienvenida ("Se requiere una invitación para empezar") se deja como está.
 
+## Bloque 1c · Aceptada, cifras de la red y Lo que importa (LISTO PARA PUBLICAR, sin publicar)
+
+Acordado el 4 nov 2026, implementado y probado en el simulador (regresión sin errores). **El código de `main` ya lo incluye; la prueba y la principal siguen en la versión 49.**
+
+1. Estado de posición **Aceptada** en lugar de Ocupada: leyenda, filtro "Aceptadas", "Todavía no hay posiciones aceptadas". En la planilla el estado "Activa" pasa a "Aceptada" (el código lee los dos).
+2. La red hoy: "N personas en M posiciones" (una persona puede estar en varios árboles).
+3. Al plantar: "El tema del árbol lo acuerdan las tres personas de la semilla cuando entren. Esta semilla cuenta como uno de tus tres árboles."
+4. Tarjeta: "Acordar el tema" / "El tema es Lo que importa a quienes forman el árbol."
+5. Tercer árbol (opción A): "Esa persona ya está en tres árboles, que es el máximo. Puede sumarse a este cuando libere uno." (y la variante al plantar).
+6. Error al convocar una posición que alguien convocó un instante antes: "Alguien ya convocó a esa posición."
+7. **Lo que importa siempre con mayúscula** cuando nombra el concepto; las frases conjugadas se reescriben para usar el nombre ("tu nombre y Lo que importa"). Corregido en la pantalla del código y en la hoja (Entrar, Transparencia, Quieren sumarse). Falta el texto oculto de "Cómo funciona" (se revisa con ese texto).
+
+**Cómo publicar el bloque 1c** (Sonnet alcanza):
+1. Ver en GitHub el último envío de `main` y usar su identificador en la dirección `raw.githubusercontent.com/virginiabarsco/whatmatters-app/<envío>/app/Code.gs` (y `Index.html`), leyendo desde la consola del editor con `fetch`; comparar las sumas con las de la copia local.
+2. Pegar, guardar dos veces, recargar y volver a comparar.
+3. Implementar → Administrar implementaciones: **Nueva versión (50)** en una de las dos; recargar el editor; poner la otra en la misma versión. Fijarse en la descripción cuál es prueba y cuál principal.
+4. **Ejecutar migrarConvocadas** (elegirla con la búsqueda de elementos, sin hacer scroll en la lista): pasa "Activa" a "Aceptada".
+5. Abrir las dos con `?v=50`, actualizar este archivo y subirlo.
+
+Pendientes nuevos (4 nov):
+- **Botón para irse de un árbol** (Virginia lo quiere). Definir antes: qué pasa con las tríadas que convocó esa persona y con las posiciones que dependen de la suya (por el entrelazado), si quien está en la semilla puede irse antes de acordar el tema, si se avisa a la tríada, y si la posición vuelve a "Por convocar". Es lo que hace que "Puede sumarse a este cuando libere uno" se pueda cumplir. Encaja con el bloque 2.
+- Tercer árbol, opción C (más adelante): que la persona apoye el árbol con un cupo de apoyo en lugar de ocupar una posición, cuando existan los apoyos.
+
 ## Bloque 1b · tema del árbol y textos de convocatoria (IMPLEMENTADO y publicado, versión 49)
 
 Acordados y publicados el 3 nov 2026. La migración de columnas de Árboles ya se ejecutó.
@@ -51,9 +74,10 @@ Pendientes nuevos:
 
 ## Vocabulario acordado
 
-- **Posición** (nunca "lugar" para una posición). Estados: **Ocupada**, **Convocada**, **Por convocar**. No se usa "libre" ni "vacía".
+- **Posición** (nunca "lugar" para una posición). Estados: **Aceptada** (antes Ocupada), **Convocada**, **Por convocar**. No se usa "libre" ni "vacía".
 - **Alcance:** **En proceso** o **Completo**.
 - **Convocar** en todos lados (acción y estado), también en correos y en la planilla.
+- **Lo que importa** se escribe siempre con mayúscula cuando nombra el concepto (es también el nombre de la app en castellano).
 - **Tema del árbol** = lo que importa a quienes forman el árbol (lo acuerdan las tres personas de la semilla). El árbol no tiene "nombre": el nombre es de la persona. **Lo que importa** = el tema de cada persona.
 - **Lugar** = geográfico (lugar del árbol, ciudad, lugar que te gusta). No "zona".
 - **Semilla** = alcance 1. **Árbol** = desde que hay al menos una persona en el alcance 2. La semilla pasa a llamarse **tríada base del tronco** cuando se completa el alcance 2.
