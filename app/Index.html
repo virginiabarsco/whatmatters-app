@@ -767,7 +767,7 @@ function mdraw() {
   MHITS = hits;
 }
 function mlegend() {
-  var h = '', top = Math.max(1, S.arbol ? Math.max(S.arbol.completo || 0, S.arbol.enProceso || 0) : 1);
+  var h = '', top = Math.max(1, M.D);
   for (var a = 1; a <= top; a++) h += '<span class="sw" style="--c:' + scaleColor(a) + '"><i></i><b>A' + a + '</b></span>';
   h += '<span>Alcance de las posiciones de cada árbol</span>';
   h += '<span>El color muestra el alcance y el borde muestra el estado de la posición</span>';

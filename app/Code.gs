@@ -287,11 +287,11 @@ function trianglesOf_(person, map, tree, people) {
 function cifrasArbol_(people) {
   var act = people.filter(function (p) { return p.estado === 'Aceptada'; });
   var completo = 0; while (completo < MAX_ALCANCE && completoA_(people, completo + 1)) completo++;
-  var maxAlc = 0, top = 0;
-  people.forEach(function (p) { if (p.alcance > maxAlc) maxAlc = p.alcance; });
+  var top = 0;
   act.forEach(function (p) { if (p.alcance > top) top = p.alcance; });
   var posiciones = 0; act.forEach(function (p) { posiciones += top - p.alcance + 1; });
-  return { completo: completo, enProceso: maxAlc > completo ? maxAlc : 0, personas: act.length, posiciones: posiciones };
+  // enProceso: el alcance más alto donde hay por lo menos una persona aceptada (todos los árboles lo muestran, junto con el completo).
+  return { completo: completo, enProceso: top, personas: act.length, posiciones: posiciones };
 }
 
 // Resumen de un árbol para la lista "Tus árboles".
