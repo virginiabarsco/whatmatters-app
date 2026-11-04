@@ -2,11 +2,11 @@
 if (!/fresh/.test(location.search)) {
   window.__PRESET_PROPS = { setup_simple_v1: 'ok', setup_tema_v1: 'ok' };
   window.__PRESET_ROWS = [
-    ['Posición','Alcance de entrada','Nombre','Correo','Invitó (posición)','Estado','Fecha de invitación','Fecha de entrada','Lo que importa'],
-    ['1',1,'Virginia Barsco','v@x.com','','Activa',new Date(2026,9,28),new Date(2026,9,28),'Confianza'],
-    ['2',1,'Ana Torres','w@x.com','1','Activa',new Date(2026,9,28),new Date(2026,9,28),'Arquitectura'],
-    ['2.3',2,'Carla Ruiz','i3@x.com','2','Activa',new Date(2026,9,28),new Date(2026,9,28),'Clima'],
-    ['3',1,'Bruno Díaz','m@x.com','1','Activa',new Date(2026,9,28),new Date(2026,9,28),'Tecnología']
+    ['Posición','Alcance de entrada','Nombre','Correo','Convocó (posición)','Estado','Fecha de convocatoria','Fecha de entrada','Lo que importa','Árbol','Ciudad','Un lugar que te guste','Punto del mapa','Recordatorio de vencimiento'],
+    ['1',1,'Virginia Barsco','v@x.com','','Activa',new Date(2026,9,28),new Date(2026,9,28),'Confianza','t1','Montevideo, Uruguay','Café Brasilero','-34.9071,-56.2010',''],
+    ['2',1,'Ana Torres','w@x.com','1','Activa',new Date(2026,9,28),new Date(2026,9,28),'Arquitectura','t1','Montevideo, Uruguay','','-34.9059,-56.1991',''],
+    ['2.3',2,'Carla Ruiz','i3@x.com','2','Activa',new Date(2026,9,28),new Date(2026,9,28),'Clima','t1','Punta del Este, Uruguay','','',''],
+    ['3',1,'Bruno Díaz','m@x.com','1','Activa',new Date(2026,9,28),new Date(2026,9,28),'Tecnología','t1','Montevideo, Uruguay','','-34.9059,-56.1991','']
   ];
 }
 </script>
@@ -17,6 +17,7 @@ if (!/fresh/.test(location.search)) {
   Sheet.prototype.put = function (r, c, v) { while (this.rows.length < r) this.rows.push([]); this.rows[r - 1][c - 1] = v; };
   Sheet.prototype.getRange = function (a, b, c, d) { if (typeof a === 'string') return new Range(this, 1, 1, 1, 1); return new Range(this, a, b, c || 1, d || 1); };
   Sheet.prototype.deleteRow = function (r) { this.rows.splice(r - 1, 1); }; Sheet.prototype.deleteRows = function (r, n) { this.rows.splice(r - 1, n); };
+  Sheet.prototype.deleteColumn = function (c) { this.rows.forEach(function (row) { if (row.length >= c) row.splice(c - 1, 1); }); };
   ['setFrozenRows', 'setColumnWidth'].forEach(function (m) { Sheet.prototype[m] = function () {}; });
   function Range(sh, r, c, nr, nc) { this.sh = sh; this.r = r; this.c = c; this.nr = nr; this.nc = nc; }
   Range.prototype.getValues = function () { var o = []; for (var i = 0; i < this.nr; i++) { var row = []; for (var j = 0; j < this.nc; j++) row.push(this.sh.cell(this.r + i, this.c + j)); o.push(row); } return o; };
@@ -34,7 +35,31 @@ if (!/fresh/.test(location.search)) {
   window.MailApp = { sendEmail: function (o) { window.__mails.push(o); }, getRemainingDailyQuota: function () { return 100; } };
   var cache = {}; window.__cache = cache; window.CacheService = { getScriptCache: function () { return { get: function (k) { return cache[k] || null; }, put: function (k, v) { cache[k] = v; }, remove: function (k) { delete cache[k]; } }; } };
   window.__clearWait = function () { Object.keys(cache).forEach(function (k) { if (k.indexOf('wait_') === 0 || k.indexOf('reinv_') === 0) delete cache[k]; }); };
-  window.ScriptApp = { getService: function () { return { getUrl: function () { return 'https://script.google.com/macros/s/TEST/exec'; } }; } };
+  window.ScriptApp = { getService: function () { return { getUrl: function () { return 'https://script.google.com/macros/s/TEST/exec'; } }; },
+    getProjectTriggers: function () { return window.__triggers || []; }, deleteTrigger: function () { window.__triggers = []; },
+    newTrigger: function (f) { var t = { f: f }; return { timeBased: function () { return { everyDays: function () { return { atHour: function () { return { inTimezone: function () { return { create: function () { window.__triggers = [{ getHandlerFunction: function () { return f; } }]; } }; } }; } }; } }; } }; } };
+  // Buscador de lugares de mentira: unos pocos lugares conocidos (el de Google real devuelve muchos más).
+  var LUGARES = [
+    { fa: 'Montevideo, Uruguay', t: ['locality', 'political'], c: [['Montevideo', ['locality']], ['Uruguay', ['country']]], lat: -34.9011, lng: -56.1645 },
+    { fa: 'Punta del Este, Maldonado, Uruguay', t: ['locality', 'political'], c: [['Punta del Este', ['locality']], ['Uruguay', ['country']]], lat: -34.9617, lng: -54.9515 },
+    { fa: 'Córdoba, Argentina', t: ['locality', 'political'], c: [['Córdoba', ['locality']], ['Argentina', ['country']]], lat: -31.4201, lng: -64.1888 },
+    { fa: 'Córdoba, España', t: ['locality', 'political'], c: [['Córdoba', ['locality']], ['España', ['country']]], lat: 37.8882, lng: -4.7794 },
+    { fa: 'Barcelona, España', t: ['locality', 'political'], c: [['Barcelona', ['locality']], ['España', ['country']]], lat: 41.3874, lng: 2.1686 },
+    { fa: 'Uruguay', t: ['country', 'political'], c: [['Uruguay', ['country']]], lat: -32.5228, lng: -55.7658 },
+    { fa: 'Café Brasilero, Ituzaingó 1447, Montevideo, Uruguay', t: ['cafe', 'establishment'], c: [['Montevideo', ['locality']], ['Uruguay', ['country']]], lat: -34.9071, lng: -56.2010 },
+    { fa: 'Parque Rodó, Montevideo, Uruguay', t: ['park', 'establishment'], c: [['Montevideo', ['locality']], ['Uruguay', ['country']]], lat: -34.9145, lng: -56.1650 },
+    { fa: 'Plaza Independencia, Montevideo, Uruguay', t: ['establishment'], c: [['Montevideo', ['locality']], ['Uruguay', ['country']]], lat: -34.9059, lng: -56.1991 },
+    { fa: 'Plaza Artigas, Punta del Este, Uruguay', t: ['establishment'], c: [['Punta del Este', ['locality']], ['Uruguay', ['country']]], lat: -34.9486, lng: -54.9331 },
+    { fa: 'Plaza Cagancha, Montevideo, Uruguay', t: ['establishment'], c: [['Montevideo', ['locality']], ['Uruguay', ['country']]], lat: -34.9057, lng: -56.1887 }
+  ];
+  function norm(t) { return String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+  window.Maps = { newGeocoder: function () { var g = { setLanguage: function () { return g; }, geocode: function (q) {
+    window.__geoCalls = (window.__geoCalls || 0) + 1;
+    var parts = norm(q).split(',').map(function (x) { return x.trim(); }), first = parts[0], rest = parts.slice(1).join(' ');
+    var res = LUGARES.filter(function (l) { return norm(l.fa).indexOf(first) >= 0 && (!rest || norm(l.fa).indexOf(rest.split(' ')[0]) >= 0); }).map(function (l) {
+      return { formatted_address: l.fa, types: l.t, address_components: l.c.map(function (c) { return { long_name: c[0], short_name: c[0], types: c[1] }; }), geometry: { location: { lat: l.lat, lng: l.lng } } }; });
+    return { status: res.length ? 'OK' : 'ZERO_RESULTS', results: res };
+  } }; return g; } };
   window.Logger = { log: function () {} };
   window.LockService = { getScriptLock: function () { return { waitLock: function () {}, releaseLock: function () {} }; } };
   var props = window.__PRESET_PROPS || {}; window.__props = props; window.PropertiesService = { getScriptProperties: function () { return { getProperty: function (k) { return props[k] || null; }, setProperty: function (k, v) { props[k] = v; }, deleteProperty: function (k) { delete props[k]; }, getProperties: function () { return Object.assign({}, props); } }; } };
@@ -50,4 +75,75 @@ if (!/fresh/.test(location.search)) {
 </script>
 <script>
 if (window.__PRESET_ROWS) { var sh = window.__book.insertSheet('Personas'); window.__PRESET_ROWS.forEach(function (r, i) { r.forEach(function (v, j) { sh.put(i + 1, j + 1, v); }); }); }
+</script>
+<script>
+// ---- Panel de prueba (solo en la página de revisión; no existe en la app real) ----
+(function () {
+  var css = document.createElement('style');
+  css.textContent = '#tp-btn{position:fixed;right:10px;bottom:10px;z-index:99999;background:#1F4E3D;color:#fff;border:0;border-radius:20px;padding:10px 14px;font:600 13px Arial;box-shadow:0 2px 8px #0005;cursor:pointer}' +
+    '#tp{position:fixed;right:10px;bottom:56px;z-index:99999;width:min(94vw,440px);max-height:68vh;overflow:auto;background:#fff;color:#16231E;border:1px solid #999;border-radius:10px;box-shadow:0 4px 16px #0006;padding:10px;font:13px Arial;display:none}' +
+    '#tp.on{display:block} #tp h3{margin:8px 0 4px;font-size:13px} #tp .tb{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px} #tp .tb button{font:600 12px Arial;padding:6px 9px;border-radius:6px;border:1px solid #1F4E3D;background:#fff;color:#1F4E3D;cursor:pointer}' +
+    '#tp .ml{border:1px solid #ccc;border-radius:8px;margin:6px 0;padding:6px} #tp .ml summary{cursor:pointer;font-weight:600} #tp .ml .hd{color:#555;font-size:12px}';
+  document.head.appendChild(css);
+  var btn = document.createElement('button'); btn.id = 'tp-btn'; btn.textContent = 'Prueba · correos'; document.body.appendChild(btn);
+  var tp = document.createElement('div'); tp.id = 'tp'; document.body.appendChild(tp);
+  var shown = 0;
+  function refresh() {
+    var n = (window.__mails || []).length;
+    btn.textContent = 'Prueba · correos (' + n + ')';
+    if (!tp.classList.contains('on')) return;
+    var h = '<div class="tb"><button data-a="ej">Armar árbol de ejemplo</button><button data-a="tiempo">Pasar 8 días</button><button data-a="limpiar">Vaciar correos</button></div>' +
+      '<p style="margin:0 0 6px;color:#555">Esto es solo para revisar: los correos no salen de esta página. Tocando un botón dentro de un correo se entra como si se hubiera abierto desde la bandeja.</p><h3>Correos (' + n + ')</h3>';
+    for (var i = n - 1; i >= 0; i--) { var m = window.__mails[i]; h += '<details class="ml"' + (i === n - 1 ? ' open' : '') + '><summary>' + esc(m.subject) + '</summary><div class="hd">Para: ' + esc(m.to) + '</div>' + (m.htmlBody || '<pre>' + esc(m.body) + '</pre>') + '</details>'; }
+    tp.innerHTML = h;
+  }
+  function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  btn.onclick = function () { tp.classList.toggle('on'); refresh(); };
+  setInterval(function () { var n = (window.__mails || []).length; if (n !== shown) { shown = n; refresh(); } }, 500);
+  tp.addEventListener('click', function (e) {
+    var a = e.target.closest('a');
+    if (a && a.href) {
+      e.preventDefault();
+      var q = new URL(a.href, location.href).searchParams;
+      window.INV = q.get('inv') || ''; window.ACC = q.get('acc') || ''; window.CONF = q.get('conf') || ''; window.ARBOL = q.get('arbol') || '';
+      window.TOKEN = ''; window.LOGIN = null; window.ACCN = null; window.LAST_STATE = ''; window.VISTA = 'inicio';
+      try { lsSet('wm_red_token', ''); lsSet('wm_acc_used', ''); lsSet('wm_conf_used', ''); } catch (x) {}
+      tp.classList.remove('on'); start(); return;
+    }
+    var b = e.target.closest('button[data-a]'); if (!b) return;
+    var act = b.getAttribute('data-a');
+    if (act === 'limpiar') { window.__mails.length = 0; refresh(); }
+    if (act === 'ej') { arbolEjemplo(); tp.classList.remove('on'); }
+    if (act === 'tiempo') { pasar8Dias(); refresh(); }
+  });
+  function pasar8Dias() {
+    var s = sheet_(), n = s.getLastRow() - 1, dia = 864e5;
+    for (var i = 0; i < n; i++) {
+      var r = i + 2, est = s.getRange(r, 6).getValue();
+      if (est !== 'Convocada' && est !== 'Invitada') continue;
+      var f = s.getRange(r, 7).getValue(); if (f) s.getRange(r, 7).setValue(new Date(new Date(f).getTime() - 8 * dia));
+    }
+    revisarConvocatorias();
+    for (var j = 0; j < n; j++) { var rr = j + 2, c = s.getRange(rr, 14).getValue(); if (c) s.getRange(rr, 14).setValue(new Date(new Date(c).getTime() - 3 * dia)); }
+    revisarConvocatorias();
+  }
+  // Un árbol desparejo: un camino llega al alcance 5, otras ramas se quedan en el 2 y alguna tríada está a medias.
+  function arbolEjemplo() {
+    var trees = readTrees_(), id = nextTreeId_(trees);
+    var ciud = [['Montevideo, Uruguay', '-34.9011,-56.1645'], ['Punta del Este, Uruguay', '-34.9617,-54.9515'], ['Córdoba, Argentina', '-31.4201,-64.1888'], ['Barcelona, España', '41.3874,2.1686']];
+    var pos = ['1', '2', '3', '1.2', '1.3', '2.2', '2.3', '3.2', '3.3', '1.2.2', '1.2.3', '1.2.2.2', '1.2.2.3', '1.2.2.2.2', '1.2.2.2.3', '2.2.2'];
+    var nom = ['Lucía Pérez', 'Mateo Silva', 'Valentina Gómez', 'Joaquín Rivas', 'Camila Duarte', 'Santiago Mora', 'Florencia Paz', 'Nicolás Vega', 'Julieta Ríos', 'Tomás Acosta', 'Martina Soto', 'Bruno Ferrari', 'Emilia Costa', 'Lautaro Núñez', 'Renata Blanco', 'Ignacio Cruz'];
+    var tema = ['Cuidar el agua', 'Cocina de barrio', 'Música en la plaza', 'Huertas urbanas', 'Cine y debate', 'Bicicletas', 'Lectura compartida', 'Mar limpio', 'Teatro', 'Aprender idiomas', 'Fotografía', 'Ajedrez', 'Clima', 'Educación', 'Arte', 'Salud mental'];
+    var sh = sheet_(), ash = SpreadsheetApp.getActive().getSheetByName('Árboles'), arow = Math.max(ash.getLastRow(), 1) + 1;
+    ash.getRange(arow, 1, 1, ACOLS).setValues([[id, 'Cuidar el agua', 'Uruguay', 'Tema acordado', 'ej1@x.com', new Date(2026, 9, 1), '', '', '', '1,2,3', new Date(2026, 9, 3), '']]);
+    var row = Math.max(sh.getLastRow(), 1) + 1;
+    pos.forEach(function (p, i) {
+      var c = ciud[i % ciud.length], depth = p.split('.').length, inv = depth === 1 ? '' : p.split('.').slice(0, -1).join('.') || '1';
+      sh.getRange(row + i, 1, 1, COLS).setValues([[p, depth, nom[i], 'ej' + (i + 1) + '@x.com', i < 3 ? (i ? '1' : '') : (inv === '1' ? '1' : (pos.indexOf(inv) >= 0 ? inv : '1')), 'Aceptada', new Date(2026, 9, 1 + depth), new Date(2026, 9, 1 + depth), tema[i], id, c[0], '', c[1], '']]);
+      sh.getRange(row + i, 1).setNumberFormat('@');
+    });
+    window.TOKEN = login('ej1@x.com'); lsSet('wm_red_token', TOKEN); ARBOL = id; LAST_STATE = ''; VISTA = 'inicio'; load();
+  }
+  function login(mail) { __clearWait(); pedirCodigo(mail); var m = __mails[__mails.length - 1]; return entrarConEnlace(m.body.match(/acc=([a-f0-9]{40})/)[1]).token; }
+})();
 </script>

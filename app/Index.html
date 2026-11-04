@@ -237,6 +237,9 @@ details.otros .obody { background: var(--bg); color: var(--ink); padding: 12px; 
 .pedidos .ped { border-top: 1px solid var(--line); padding-top: 10px; display: grid; gap: 4px; }
 .pedidos .pedh { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
 .pedidos .pedmsg { font-style: italic; }
+.ubrow { display: flex; gap: 6px; flex-wrap: wrap; } .ubrow input { flex: 1 1 160px; min-width: 0; }
+.ubres { display: grid; gap: 4px; } .ubres:empty { display: none; }
+.ubopt { text-align: left; background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font: inherit; cursor: pointer; }
 .pedasig { display: grid; gap: 8px; margin-top: 4px; }
 select, textarea { font: inherit; font-weight: 400; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; }
 details.otros summary { cursor: pointer; list-style-position: inside; }
@@ -442,12 +445,57 @@ function member(l) {
   var cls = l.estado === 'Aceptada' ? 'act' : l.estado === 'Convocada' ? 'inv' : 'free';
   var name = l.estado === 'Aceptada' ? esc(l.nombre) + (l.yo ? ' (vos)' : '') : l.estado === 'Convocada' ? 'Convocada' + (l.correo ? ': ' + esc(l.correo) : '') : 'Posición por convocar';
   var h = '<div class="member ' + cls + (l.yo ? ' yo' : '') + '"' + (cls === 'act' ? ' style="--c:' + colorOf(l.pid) + '"' : '') + '><span class="dot"></span><span class="name">' + name + '</span><span class="pos">' + l.pos + '</span></div>';
+  if (l.estado === 'Aceptada' && S.ubic && S.ubic[l.pid] && ubTxt(S.ubic[l.pid])) h += '<div class="small muted">' + esc(ubTxt(S.ubic[l.pid])) + '</div>';
+  if (l.bloqueo) h += '<div class="small muted">' + esc(l.bloqueo) + '</div>';
   if (l.puedoInvitar) h += '<form class="inv" data-inv="' + l.pos + '"><input type="email" placeholder="Correo para convocar" aria-label="Correo para la posición ' + l.pos + '" required><button type="submit">Convocar</button></form>';
   if (l.mia) h += '<div class="small"><button class="link" style="color:var(--ink)" data-resend="' + l.pos + '">Reenviar convocatoria</button> · <button class="link" data-cancel="' + l.pos + '">Cancelar</button></div>';
   return h;
 }
 var LO_QUE_IMPORTA_FIELD = '<label>Lo que importa <span class="small muted" style="font-weight:400">Al menos una palabra, luego se puede cambiar o ampliar. Puede ser cualquier tema: una idea, una causa, un lugar…</span><input id="loQueImportaIn" maxlength="120" required></label>';
 var PERFIL = false;
+// ---- ciudad y lugar: buscador ----
+var UB = {};
+function ubSet(u) { u = u || {}; UB = { ciudad: u.ciudad || '', ciudadLat: '', ciudadLng: '', lugar: u.lugar || '', lugarLat: '', lugarLng: '' }; }
+function ubicHtml() {
+  return '<div class="ubic" style="display:grid;gap:10px">' +
+    '<label>Tu ciudad <span class="small muted" style="font-weight:400">Obligatoria. Escribila y tocá «Buscar» para elegir la correcta.</span><span class="ubrow"><input id="ubCiudad" maxlength="80" autocomplete="off" value="' + esc(UB.ciudad || '') + '" required><button type="button" class="ghost" data-ubbuscar="ciudad">Buscar</button></span></label><div class="ubres" id="ubCiudadRes"></div>' +
+    '<label>Un lugar que te guste <span class="small muted" style="font-weight:400">Opcional. Elegirlo sirve solo para dibujar el mapa del juego, que es público.</span><span class="ubrow"><input id="ubLugar" maxlength="120" autocomplete="off" value="' + esc(UB.lugar || '') + '"><button type="button" class="ghost" data-ubbuscar="lugar">Buscar</button></span></label><div class="ubres" id="ubLugarRes"></div></div>';
+}
+function ubBind() {
+  var c = $('#ubCiudad'), l = $('#ubLugar');
+  if (c) c.oninput = function () { UB.ciudad = c.value; UB.ciudadLat = ''; UB.ciudadLng = ''; };
+  if (l) l.oninput = function () { UB.lugar = l.value; UB.lugarLat = ''; UB.lugarLng = ''; };
+  Array.prototype.forEach.call(document.querySelectorAll('[data-ubbuscar]'), function (b) {
+    b.onclick = function () {
+      var modo = b.getAttribute('data-ubbuscar'), inp = $(modo === 'ciudad' ? '#ubCiudad' : '#ubLugar'), box = $(modo === 'ciudad' ? '#ubCiudadRes' : '#ubLugarRes');
+      if (!inp || !box) return; if (BUSY) return;
+      box.innerHTML = '<span class="small muted">Buscando…</span>';
+      call('buscarLugar', inp.value, modo, modo === 'lugar' ? UB.ciudad : '').then(function (rs) {
+        if (!rs || !rs.length) { box.innerHTML = '<span class="small muted">No encontramos nada con ese texto. Se puede probar con otro, o dejarlo escrito así.</span>'; return; }
+        box.innerHTML = rs.map(function (r, i) { return '<button type="button" class="ubopt" data-ubi="' + i + '"><b>' + esc(r.nombre) + '</b>' + (r.dir ? '<span class="small muted"> · ' + esc(r.dir) + '</span>' : '') + '</button>'; }).join('');
+        Array.prototype.forEach.call(box.querySelectorAll('[data-ubi]'), function (o) {
+          o.onclick = function () {
+            var r = rs[Number(o.getAttribute('data-ubi'))]; inp.value = r.nombre;
+            if (modo === 'ciudad') { UB.ciudad = r.nombre; UB.ciudadLat = r.lat; UB.ciudadLng = r.lng; } else { UB.lugar = r.nombre; UB.lugarLat = r.lat; UB.lugarLng = r.lng; }
+            box.innerHTML = '<span class="small muted">Elegido: ' + esc(r.nombre) + '</span>';
+          };
+        });
+      }).catch(function (e) { box.innerHTML = '<span class="small" style="color:var(--bad,#b00020)">' + esc(errMsg(e)) + '</span>'; });
+    };
+  });
+}
+function ubOk() { var c = $('#ubCiudad'); if (c) UB.ciudad = c.value; var l = $('#ubLugar'); if (l) UB.lugar = l.value; if (!String(UB.ciudad || '').trim()) { toast('Falta tu ciudad.', true); return false; } return true; }
+function ubTxt(u) { return u ? [u.ciudad, u.lugar].filter(Boolean).join(' · ') : ''; }
+function nPers(n) { return num(n) + (n === 1 ? ' persona' : ' personas'); }
+function nPos(n) { return num(n) + (n === 1 ? ' posición' : ' posiciones'); }
+// "Completo: A2 · En proceso: A4 · 12 personas · 14 posiciones" (igual en todos lados)
+function cifrasTxt(t) {
+  var p = [];
+  if (t.completo) p.push('Completo: A' + t.completo);
+  if (t.enProceso) p.push('En proceso: A' + t.enProceso);
+  p.push(nPers(t.personas || 0)); p.push(nPos(t.posiciones || 0));
+  return p.join(' · ');
+}
 function modoVisita() { return !S.yo && !ACCN && !S.invitacion; }
 function comoFuncionaHtml() {
   // El texto completo está en revisión; mientras tanto se ve solo este aviso.
@@ -460,20 +508,28 @@ function puertasHtml() {
 }
 function redCabeza() {
   var n = (S.arboles || []).length;
-  return '<div class="card"><h2>La red hoy</h2><div class="cifras"><span><b>' + num(S.redPersonas || 0) + '</b> ' + (S.redPersonas === 1 ? 'persona' : 'personas') + ' en <b>' + num(S.redPosiciones || 0) + '</b> ' + (S.redPosiciones === 1 ? 'posición' : 'posiciones') + '</span><span><b>' + n + '</b> ' + (n === 1 ? 'árbol' : 'árboles') + '</span></div></div>';
+  return '<div class="card"><h2>La red hoy</h2><div class="cifras"><span>' + nPers(S.redPersonas || 0) + ' · ' + nPos(S.redPosiciones || 0) + ' · ' + num(n) + (n === 1 ? ' árbol' : ' árboles') + '</span></div></div>';
 }
 var VISTA = 'inicio';
 function irA(v) { VISTA = v; PERFIL = false; RENAME = null; if (v === 'red') OTROS = true; render(); window.scrollTo(0, 0); }
 function loginCard() {
   var inv = S.invitacion, h = '<div class="card">';
+  if (inv && inv.estado === 'Vencida' && !LOGIN) {
+    h += '<h2>Esta convocatoria venció</h2><p class="small muted">Esta convocatoria venció. Para sumarse hace falta una convocatoria nueva.' + (inv.solicitada || inv.enTres ? '' : ' Podés solicitarla acá:') + '</p>';
+    if (inv.solicitada) return h + '<p class="small">Tu solicitud ya está enviada.</p></div>';
+    if (inv.enTres) return h + '<p class="small">Ya estás en tres árboles, que es el máximo. Podés sumarte a este cuando liberes uno.</p></div>';
+    h += '<form id="vencForm" style="display:grid;gap:10px">' + (inv.conocida ? '' : '<label>Tu nombre<input id="vNombre" autocomplete="name" required maxlength="60"></label><label>Lo que importa <span class="small muted" style="font-weight:400">Al menos una palabra, luego se puede cambiar o ampliar.</span><input id="vLoQueImporta" maxlength="120" required></label>') +
+      '<label>Mensaje <span class="small muted" style="font-weight:400">Opcional.</span><textarea id="vMsg" maxlength="400" rows="3"></textarea></label><button type="submit">Solicitar una convocatoria nueva</button></form>';
+    return h + '</div>';
+  }
   if (inv && inv.estado === 'Convocada' && !LOGIN) {
     h += '<h2>' + esc(inv.de || 'Alguien') + ' te convocó a su tríada</h2><p class="small muted">' + convocaTxt(inv, true) + '</p>';
-    h += '<form id="acceptForm" style="display:grid;gap:10px">' + (inv.conocida ? '<p class="small">Ya estás en otro árbol, así que entrás con los mismos datos que ya están en tu perfil.</p>' : '<label>Tu nombre <span class="small muted" style="font-weight:400">Así te va a ver el resto de la red.</span><input id="nameIn" autocomplete="name" required></label>' + LO_QUE_IMPORTA_FIELD) + '<button type="submit">Aceptar la convocatoria</button></form>';
+    h += '<form id="acceptForm" style="display:grid;gap:10px">' + (inv.conocida ? '<p class="small">Ya estás en otro árbol, así que entrás con los mismos datos que ya están en tu perfil.</p>' : '<label>Tu nombre <span class="small muted" style="font-weight:400">Así te va a ver el resto de la red.</span><input id="nameIn" autocomplete="name" required></label>' + LO_QUE_IMPORTA_FIELD + ubicHtml()) + '<button type="submit">Aceptar la convocatoria</button></form>';
     return h + '</div>';
   }
   if (ACCN && !LOGIN) {
     h += '<h2>Ocupar tu posición</h2><p class="small muted">Vas a ocupar la posición ' + esc(ACCN.pos) + ' con el correo <b>' + esc(ACCN.correo) + '</b>.</p>';
-    h += '<form id="accForm" style="display:grid;gap:10px"><label>Tu nombre <span class="small muted" style="font-weight:400">Así te va a ver el resto de la red.</span><input id="nameIn" autocomplete="name" required></label>' + LO_QUE_IMPORTA_FIELD + '<button type="submit">Ocupar mi posición (' + esc(ACCN.pos) + ')</button></form>';
+    h += '<form id="accForm" style="display:grid;gap:10px"><label>Tu nombre <span class="small muted" style="font-weight:400">Así te va a ver el resto de la red.</span><input id="nameIn" autocomplete="name" required></label>' + LO_QUE_IMPORTA_FIELD + ubicHtml() + '<button type="submit">Ocupar mi posición (' + esc(ACCN.pos) + ')</button></form>';
     return h + '</div>';
   }
   if (!LOGIN) {
@@ -489,7 +545,7 @@ function loginCard() {
   } else {
     h += '<h2>' + (LOGIN.necesitaNombre ? 'Ocupar tu posición' : 'Te mandamos un correo') + '</h2><p class="small muted">' + (LOGIN.necesitaNombre ? 'Te mandamos un correo a <b>' + esc(LOGIN.correo) + '</b>. Con el botón «Ocupar mi posición» del correo se entra directo; también se puede escribir acá el código de 6 dígitos que viene debajo, tu nombre y Lo que importa.' : 'Te mandamos un correo a <b>' + esc(LOGIN.correo) + '</b>. Con el botón «Entrar» del correo se entra directo; también se puede escribir acá el código de 6 dígitos que viene debajo.') + ' Si no aparece en unos minutos, puede estar en la carpeta de spam.</p>';
     h += '<form id="codeForm" style="display:grid;gap:10px"><label>Código<input id="codeIn" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required></label>';
-    if (LOGIN.necesitaNombre) h += '<label>Tu nombre <span class="small muted" style="font-weight:400">Así te va a ver el resto de la red.</span><input id="nameIn" autocomplete="name" required></label>' + LO_QUE_IMPORTA_FIELD;
+    if (LOGIN.necesitaNombre) h += '<label>Tu nombre <span class="small muted" style="font-weight:400">Así te va a ver el resto de la red.</span><input id="nameIn" autocomplete="name" required></label>' + LO_QUE_IMPORTA_FIELD + ubicHtml();
     h += '<button type="submit">' + (LOGIN.necesitaNombre ? 'Ocupar mi posición (' + esc(LOGIN.pos) + ')' : 'Entrar') + '</button>';
     h += '<button type="button" class="link" style="color:var(--muted);justify-self:start" id="otherMail">Usar otro correo</button></form>';
   }
@@ -737,7 +793,8 @@ function mcard() {
       var own = [], b = pid === '1' ? '' : pid; while (mlen(b) < M.D) { own.push(b); b = b === '' ? '1' : b + '.1'; }
       h += '<div class="who"><span class="pdot" style="--c:' + colorOf(pid) + '"></span><b class="name">' + esc(M.people[pid]) + (pid === M.me ? ' (vos)' : '') + '</b></div>';
       h += '<span class="small muted">Está en ' + pos.join(' · ') + '. ' + (pid === '1' ? 'Plantó la semilla' : 'Entró ' + where) + '.</span>' +
-        (S.loQueImporta && S.loQueImporta[pid] ? '<span class="small">Lo que importa: <b>' + esc(S.loQueImporta[pid]) + '</b></span>' : '');
+        (S.loQueImporta && S.loQueImporta[pid] ? '<span class="small">Lo que importa: <b>' + esc(S.loQueImporta[pid]) + '</b></span>' : '') +
+        (S.ubic && S.ubic[pid] && ubTxt(S.ubic[pid]) ? '<span class="small muted">' + esc(ubTxt(S.ubic[pid])) + '</span>' : '');
       h += '<div class="acts"><button type="button" class="xlink" data-golist="' + pid + '">Ver en la lista →</button>' +
         (pid === M.me ? '<button type="button" class="xlink" data-perfil="1">Mi perfil</button>' : (ADMIN() ? '<button type="button" class="xlink" data-rename="' + pid + '">Corregir nombre</button>' : '')) +
         (ADMIN() && pid !== M.me ? (QCONF === pid ? '<span class="small">¿Quitar a ' + esc(M.people[pid]) + ' de este árbol? <button type="button" class="link" data-quitar-ok="' + pid + '">Sí, quitar</button> · <button type="button" class="link" style="color:var(--ink)" data-quitar-no="1">No</button></span>' : '<button type="button" class="link" data-quitar="' + pid + '">Quitar del árbol</button>') : '') + '</div>';
@@ -748,6 +805,7 @@ function mcard() {
       else if (ADMIN()) h += '<div class="small"><button class="link" data-cancel="' + pid + '">Cancelar esta convocatoria</button> <span class="muted">(como administradora)</span></div>';
     } else {
       h += '<b class="name">Por convocar · P' + pid + '</b><span class="small muted">' + (M.open[entry] || mlen(pid) === 1 ? 'Está ' + where + '.' : 'Su tríada todavía no se abrió.') + '</span>';
+      if (l.bloqueo) h += '<span class="small muted">' + esc(l.bloqueo) + '</span>';
       if (l.puedoInvitar) h += '<form class="inv" data-inv="' + pid + '"><input type="email" placeholder="Correo para convocar" aria-label="Correo para la posición ' + pid + '" required><button type="submit">Convocar</button></form>';
     }
   } else {
@@ -918,19 +976,18 @@ function bindSearch() {
   q.onkeydown = function (e) { if (e.key === 'Enter') { var f = box.querySelector('[data-gopid]'); if (f) { e.preventDefault(); f.click(); } } if (e.key === 'Escape') { q.value = ''; box.hidden = true; } };
 }
 // ---------- varios árboles ----------
-// La ficha del árbol que se está mirando: nombre (si no está arriba, en "Tus árboles"), tipo y lugar.
+// La ficha del árbol que se está mirando: nombre (si no está arriba, en "Tus árboles").
 function arbolInfo() {
   var a = S.arbol; if (!a) return '';
   var h = '';
   if (!S.yo) h += '<div class="tbar"><span><span class="k">Árbol</span><span class="v">' + esc(a.titulo) + '</span></span></div>';
   else if (!S.me) h += '<div class="tbar ajeno"><span><span class="k">Estás mirando</span><span class="v">' + esc(a.titulo) + '</span><span class="small muted" style="display:block">No estás en este árbol</span></span></div>';
-  if (a.acordado && ((a.tipo && !S.me) || a.desc)) h += '<div class="tdesc"><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">' + (a.tipo && !S.me ? '<span class="tag">' + esc(a.tipo) + '</span>' : '') + (a.desc ? '<span class="small">' + (a.tipo === 'Geográfico' ? 'Lugar: ' : '') + esc(a.desc) + '</span>' : '') + '</div></div>';
   return h;
 }
 function tcardHtml(t, compact) {
   var cur = S.arbol && t.id === S.arbol.id;
-  var tags = '<span class="tag ' + (t.esArbol ? 'arbol">Árbol' : 'semilla">Semilla') + '</span>' + (t.tipo ? '<span class="tag">' + esc(t.tipo) + '</span>' : '');
-  var info = num(t.personas) + (t.personas === 1 ? ' persona' : ' personas') + (t.ajeno ? '' : t.estado === 'Convocada' ? ' · te convocaron a la posición ' + esc(t.pos) : ' · tu posición: ' + esc(t.pos));
+  var tags = '<span class="tag ' + (t.esArbol ? 'arbol">Árbol' : 'semilla">Semilla') + '</span>' + (t.lugar ? '<span class="tag">' + esc(t.lugar) + '</span>' : '');
+  var info = cifrasTxt(t) + (t.ajeno ? '' : t.estado === 'Convocada' ? ' · Te convocaron a la posición ' + esc(t.pos) : ' · Tu posición: ' + esc(t.pos));
   var aviso = !t.acordado ? '<span class="small muted">' + (t.falta ? 'Hay una propuesta de tema para acordar.' : 'Falta acordar el tema.') + '</span>' : '';
   var h = '<button type="button" class="tcard' + (cur ? ' cur' : '') + (compact ? ' mini' : '') + '" data-tree="' + esc(t.id) + '"' + (cur ? ' aria-current="true"' : '') + '><b>' + esc(t.titulo) + '</b><span class="row">' + tags + '<span class="small muted">' + info + '</span></span>' + (compact ? '' : aviso) + '</button>';
   if (t.estado === 'Convocada') h += '<button type="button" data-aceptar="' + esc(t.id) + '">Aceptar la convocatoria a este árbol</button>';
@@ -963,26 +1020,27 @@ function todosArboles() {
     '<div class="obody"><p class="small muted">Todos los árboles están a la vista: al tocar uno se ven su mapa y su gente.</p>' +
     (lista.length > 1 ? '<div class="search"><input id="tq" type="search" placeholder="Buscar un árbol" autocomplete="off" aria-label="Buscar un árbol por tema o lugar"></div>' : '') +
     '<div class="tlist" id="tlistAll">' +
-    lista.map(function (t) { return '<div class="titem" data-q="' + esc(normTxt([t.titulo, t.tipo, t.desc].join(' '))) + '">' + tcardHtml(t, false) + '</div>'; }).join('') +
+    lista.map(function (t) { return '<div class="titem" data-q="' + esc(normTxt([t.titulo, t.lugar].join(' '))) + '">' + tcardHtml(t, false) + '</div>'; }).join('') +
     '</div><p class="small muted" id="tqNone" hidden>No hay ningún árbol con ese tema.</p></div></details>';
 }
 // Pedir sumarse al árbol que se está mirando (para quien no está en él).
 function sumarCard() {
   if (!S.arbol) return '';
-  if (S.miPedido) return '<div class="card sumar"><p class="small">Tu pedido para sumarte a este árbol ya llegó a su persona 1, que coordina en qué posición te sumarías.</p></div>';
+  if (S.miPedido) return '<div class="card sumar"><p class="small">Tu solicitud para sumarte a este árbol ya llegó a quien la coordina, que define en qué posición te sumarías.</p></div>';
   if (!S.puedoPedir) return '';
+  if (S.invitacion && S.invitacion.estado === 'Vencida') return '';
   // Quien tiene una convocatoria pendiente a este árbol no necesita pedir sumarse.
   if (S.invitacion && S.invitacion.estado === 'Convocada' && S.invitacion.arbol === S.arbol.id) return '';
   if (!SUMAR) return '<button type="button" class="ghost sumarbtn" id="sumarSi">Quiero sumarme a este árbol</button>';
-  var h = '<form id="sumarForm" class="card sumar" style="gap:10px"><h2>Quiero sumarme</h2><p class="small muted">La persona 1 del árbol recibe el pedido y coordina en qué posición te sumarías.</p>';
+  var h = '<form id="sumarForm" class="card sumar" style="gap:10px"><h2>Quiero sumarme</h2><p class="small muted">La persona 1 del árbol recibe la solicitud y coordina en qué posición te sumarías.</p>';
   if (!S.yo) h += '<label>Tu nombre<input id="sNombre" autocomplete="name" required maxlength="60"></label>' +
     '<label>Correo<input id="sCorreo" type="email" autocomplete="email" required></label>' +
     '<label>Lo que importa <span class="small muted" style="font-weight:400">Al menos una palabra, luego se puede cambiar o ampliar. Puede ser cualquier tema: una idea, una causa, un lugar…</span><input id="sLoQueImporta" maxlength="120" required></label>';
   h += '<label>Mensaje <span class="small muted" style="font-weight:400">Opcional: por qué te interesa este árbol.</span><textarea id="sMsg" maxlength="400" rows="3"></textarea></label>';
-  if (!S.yo) h += '<p class="small muted">Te mandamos un correo para confirmar el pedido.</p>';
-  return h + '<div class="btns"><button type="submit">Enviar el pedido</button><button type="button" class="ghost" id="sumarNo">Cancelar</button></div></form>';
+  if (!S.yo) h += '<p class="small muted">Te mandamos un correo para confirmar la solicitud.</p>';
+  return h + '<div class="btns"><button type="submit">Enviar la solicitud</button><button type="button" class="ghost" id="sumarNo">Cancelar</button></div></form>';
 }
-// Los pedidos vigentes del árbol: a la vista de todos; la persona 1 elige la posición y quien la tiene invita.
+// Las solicitudes vigentes del árbol: a la vista de todos; quien coordina elige la posición y quien la tiene convoca.
 function pedidosCard() {
   var ps = S.pedidos || [];
   if (!ps.length) return '';
@@ -996,10 +1054,10 @@ function pedidosCard() {
     } else if (q.soyP1) {
       if (S.libres.length) {
         r += '<div class="pedasig"><label class="small" style="font-weight:700">Posición donde se sumaría<select data-pedsel="' + esc(q.id) + '">' +
-          S.libres.map(function (l) { return '<option value="' + esc(l.pos) + '" data-dueno="' + esc(l.dueno) + '">' + esc(l.pos) + ' · ' + (l.dueno === '1' ? 'tu tríada' : 'tríada de ' + esc(l.duenoNombre)) + '</option>'; }).join('') +
-          '</select></label><div class="btns"><button type="button" data-pedok="' + esc(q.id) + '">' + (S.libres[0].dueno === '1' ? 'Convocar' : 'Proponer esta posición') + '</button><button type="button" class="ghost" data-pedcer="' + esc(q.id) + '">Cerrar el pedido</button></div></div>';
-      } else r += '<span class="small muted">Por ahora no hay posiciones por convocar abiertas en el árbol.</span><div class="btns"><button type="button" class="ghost" data-pedcer="' + esc(q.id) + '">Cerrar el pedido</button></div>';
-    } else r += '<span class="small muted">Esperando a que la persona 1 del árbol elija la posición.</span>';
+          S.libres.map(function (l) { return '<option value="' + esc(l.pos) + '" data-dueno="' + esc(l.dueno) + '">' + esc(l.pos) + ' · ' + (S.me && l.dueno === S.me.pos ? 'tu tríada' : 'tríada de ' + esc(l.duenoNombre)) + '</option>'; }).join('') +
+          '</select></label><div class="btns"><button type="button" data-pedok="' + esc(q.id) + '">' + (S.me && S.libres[0].dueno === S.me.pos ? 'Convocar' : 'Proponer esta posición') + '</button><button type="button" class="ghost" data-pedcer="' + esc(q.id) + '">Cerrar la solicitud</button></div></div>';
+      } else r += '<span class="small muted">Por ahora no hay posiciones por convocar abiertas en el árbol.</span><div class="btns"><button type="button" class="ghost" data-pedcer="' + esc(q.id) + '">Cerrar la solicitud</button></div>';
+    } else r += '<span class="small muted">Esperando a que quien coordina elija la posición.</span>';
     return r + '</div>';
   }).join('');
   return h + '</div>';
@@ -1009,7 +1067,7 @@ function temaCard() {
   var h = '<div class="card tema"><h2>Acordar el tema</h2><p class="small muted">El tema es Lo que importa a quienes forman el árbol.</p>';
   var mine = a.soySemilla && S.me ? S.me.pos : '';
   if (a.prop && !PROP) {
-    h += '<div class="prop"><span class="small muted">Propuesta de ' + esc(a.prop.deNombre || 'P' + a.prop.de) + '</span><b class="n">' + esc(a.prop.tema) + '</b><span><span class="tag">' + esc(a.prop.tipo) + '</span></span>' + (a.prop.desc ? '<p class="small">Lugar: ' + esc(a.prop.desc) + '</p>' : '') + '</div>';
+    h += '<div class="prop"><span class="small muted">Propuesta de ' + esc(a.prop.deNombre || 'P' + a.prop.de) + '</span><b class="n">' + esc(a.prop.tema) + '</b>' + (a.prop.lugar ? '<p class="small">Lugar: ' + esc(a.prop.lugar) + '</p>' : '') + '</div>';
   }
   var form = mine && (PROP || !a.prop);
   h += '<div class="seedst">' + a.semilla.map(function (p) {
@@ -1027,8 +1085,7 @@ function temaCard() {
   if (form) {
     h += '<form id="temaForm" style="display:grid;gap:10px">' +
       '<label>Tema del árbol<input id="tTema" maxlength="60" required></label>' +
-      '<fieldset style="border:0;padding:0;margin:0"><legend style="font-size:13px;font-weight:700;padding:0">Tipo</legend><div class="radios"><label><input type="radio" name="tTipo" value="Temático" required> Temático</label><label><input type="radio" name="tTipo" value="Geográfico"> Geográfico</label></div></fieldset>' +
-      '<label id="lugarBox" hidden>Si es geográfico, ¿de qué lugar es?<input id="tLugar" maxlength="240"></label>' +
+      '<label>Lugar del árbol <span class="small muted" style="font-weight:400">Buscalo, o tocá «Todo el planeta» si el tema no es de un lugar.</span><span class="ubrow"><input id="tLugar" maxlength="240" autocomplete="off" required><button type="button" class="ghost" id="tLugarBuscar">Buscar</button><button type="button" class="ghost" id="tPlaneta">Todo el planeta</button></span></label><div class="ubres" id="tLugarRes"></div>' +
       '<div class="btns"><button type="submit">Proponer este tema</button>' + (a.prop ? '<button type="button" class="ghost" id="temaNo">Cancelar</button>' : '') + '</div></form>';
   } else {
     var yaAcuerdo = a.semilla.some(function (p) { return p.pos === mine && p.acuerda; });
@@ -1041,8 +1098,27 @@ function switchTree(id) {
   ARBOL = id; lsSet('wm_arbol', id); MSEL = null; QCONF = null; PLANTAR = false; SUMAR = false; PROP = false; RENAME = null; MV.z = 0; FOLD = {}; LAST_STATE = '';
   return load();
 }
+function subtituloHtml() {
+  var a = S.arbol;
+  if (!a) return '<div><h1>' + nPers(S.activos || 0) + '</h1></div>';
+  var p = [];
+  if (a.acordado && a.lugar) p.push(esc(a.lugar));
+  p.push(cifrasTxt(a));
+  if (S.me) p.push(S.me.estado === 'Convocada' ? 'Te convocaron a la posición ' + esc(S.me.pos) : 'Tu posición: ' + esc(S.me.pos));
+  return '<div><h1><small>' + p.join(' · ') + '</small></h1></div>';
+}
+function ciudadCard() {
+  return '<div class="card"><h2>Falta tu ciudad</h2><p class="small muted">Para seguir hace falta tu ciudad: se usa para dibujar el mapa del juego, que es público.</p><form id="ciudadForm" style="display:grid;gap:10px">' + ubicHtml() + '<button type="submit">Guardar</button></form></div>';
+}
+function irmeHtml() {
+  if (!S.me || S.me.estado !== 'Aceptada') return '';
+  if (!IRME) return '<div class="btns"><button type="button" class="link" style="color:var(--muted)" id="irmeSi">Irme de este árbol</button></div>';
+  return '<div class="card"><p class="small">¿Irte de este árbol? Tu posición vuelve a Por convocar.</p><div class="btns"><button type="button" id="irmeOk">Sí, irme</button><button type="button" class="ghost" id="irmeNo">No</button></div></div>';
+}
+var IRME = false;
 function render() {
   assignColors(S.orden || []);
+  if (!document.querySelector('.ubic')) ubSet(S.yo || {});
   M = mapData();
   var visita = modoVisita(), corto = visita && VISTA !== 'red';
   var h = '<div class="top"><button type="button" class="brand" id="irInicio" aria-label="Ir al inicio">' + wmMini(24) + wordmark() + '</button>';
@@ -1054,16 +1130,18 @@ function render() {
     else if (VISTA === 'entrar') h += loginCard();
     else h += redCabeza() + todosArboles();
   } else if (!S.yo || ACCN) { h += heroHtml(); h += loginCard(); }
-  if (!corto) {
+  if (!corto && S.yo && !S.yo.ciudad) h += ciudadCard();
+  else if (!corto) {
   if (S.yo) h += misArboles();
   h += arbolInfo();
   h += sumarCard();
-  h += '<div><h1>' + num(S.activos) + ' <small>' + (S.activos === 1 ? 'persona' : 'personas') + (S.activos ? ' · árbol A' + M.D : '') + (S.alcanzado ? ' · alcance ' + S.alcanzado + ' completo' : '') + '</small></h1></div>';
+  h += subtituloHtml();
   h += otherSessionCard();
   if (PERFIL && S.yo) {
     h += '<div class="card"><h2>Mi perfil</h2><form id="perfilForm" style="display:grid;gap:10px">' +
       '<label>Nombre <span class="small muted" style="font-weight:400">Así te ve el resto de la red, en todos tus árboles.</span><input id="pNombre" value="' + esc(S.yo.nombre || '') + '" required maxlength="60" autocomplete="name"></label>' +
       '<label>Lo que importa <span class="small muted" style="font-weight:400">Al menos una palabra, luego se puede cambiar o ampliar. Puede ser cualquier tema: una idea, una causa, un lugar…</span><input id="pLoQueImporta" value="' + esc(S.yo.loQueImporta || '') + '" required maxlength="120"></label>' +
+      ubicHtml() +
       '<p class="small muted" style="margin:0">' + (S.me ? 'En este árbol estás en la posición ' + esc(S.me.pos) + ' · ' : '') + esc(S.yo.correo) + ' (tu correo no lo ve nadie más)</p>' +
       '<div style="display:flex;gap:8px"><button type="submit">Guardar</button><button type="button" class="ghost" id="perfilCerrar">Cerrar</button></div></form></div>';
   } else if (RENAME && S.yo) {
@@ -1075,6 +1153,7 @@ function render() {
   h += '<div class="tabs" role="tablist" aria-label="Cómo ver la red"><button type="button" role="tab" data-tab="mapa" aria-selected="' + (TAB === 'mapa') + '">Mapa</button><button type="button" role="tab" data-tab="lista" aria-selected="' + (TAB === 'lista') + '">Lista</button></div>';
   h += searchHtml();
   h += TAB === 'mapa' ? mapHtml() + mlegend() : listHtml();
+  h += irmeHtml();
   if (S.yo) h += todosArboles();
   if (visita) h += '<div class="btns"><button type="button" class="ghost" data-ir="inicio">Volver al inicio</button><button type="button" data-ir="entrar">Entrar</button></div>';
   }
@@ -1099,8 +1178,8 @@ function bind() {
   var om = $('#otherMail'); if (om) om.onclick = function () { LOGIN = null; render(); };
   var af = $('#acceptForm');
   if (af) af.onsubmit = function (e) {
-    e.preventDefault(); if (BUSY) return; busy(true);
-    call('aceptarInvitacion', INV, $('#nameIn') ? $('#nameIn').value : '', $('#loQueImportaIn') ? $('#loQueImportaIn').value : '').then(function (res) {
+    e.preventDefault(); if (BUSY) return; if ($('#ubCiudad') && !ubOk()) return; busy(true);
+    call('aceptarInvitacion', INV, $('#nameIn') ? $('#nameIn').value : '', $('#loQueImportaIn') ? $('#loQueImportaIn').value : '', UB).then(function (res) {
       busy(false); TOKEN = res.token; lsSet('wm_red_token', TOKEN); INV = ''; if (res.arbol) ARBOL = res.arbol;
       return load().then(function () { if (S.me) toast('Listo, ya estás en el árbol.'); });
     }).catch(function (err) { busy(false); toast(errMsg(err), true); });
@@ -1115,8 +1194,8 @@ function bind() {
   };
   var af = $('#accForm');
   if (af) af.onsubmit = function (e) {
-    e.preventDefault(); if (BUSY) return; busy(true);
-    call('entrarConEnlace', ACC, $('#nameIn').value, $('#loQueImportaIn').value).then(function (res) {
+    e.preventDefault(); if (BUSY) return; if (!ubOk()) return; busy(true);
+    call('entrarConEnlace', ACC, $('#nameIn').value, $('#loQueImportaIn').value, UB).then(function (res) {
       busy(false); lsSet('wm_acc_used', ACC); ACCN = null;
       if (TOKEN && TOKEN !== res.token) call('cerrarSesion', TOKEN).catch(function () {});
       TOKEN = res.token; lsSet('wm_red_token', TOKEN); LOGIN = null; INV = ''; if (res.arbol) ARBOL = res.arbol;
@@ -1127,13 +1206,37 @@ function bind() {
   if (cf) cf.onsubmit = function (e) {
     e.preventDefault(); if (BUSY) return;
     var code = $('#codeIn').value, name = $('#nameIn') ? $('#nameIn').value : '', loQueImporta = $('#loQueImportaIn') ? $('#loQueImportaIn').value : '';
+    if ($('#ubCiudad') && !ubOk()) return;
     busy(true);
-    call('verificarCodigo', LOGIN.correo, code, name, loQueImporta).then(function (res) {
+    call('verificarCodigo', LOGIN.correo, code, name, loQueImporta, UB).then(function (res) {
       busy(false); TOKEN = res.token; lsSet('wm_red_token', TOKEN); LOGIN = null; PROPIO = true; if (res.arbol && !ARBOL) ARBOL = res.arbol;
       return load().then(function () { if (S.yo) toast('Hola, ' + (S.yo.nombre || '').split(' ')[0]); });
     }).catch(function (err) { busy(false); toast(errMsg(err), true); });
   };
   Array.prototype.forEach.call(document.querySelectorAll('[data-fold]'), function (b) { b.onclick = function () { var k = b.getAttribute('data-fold'); if (FOLD[k]) delete FOLD[k]; else FOLD[k] = true; render(); }; });
+  ubBind();
+  var vf = $('#vencForm');
+  if (vf) vf.onsubmit = function (e) {
+    e.preventDefault(); if (BUSY) return; busy(true);
+    var v = function (id) { var x = $(id); return x ? x.value : ''; };
+    call('solicitarDesdeVencida', INV, v('#vNombre'), v('#vLoQueImporta'), v('#vMsg')).then(function () { busy(false); LAST_STATE = ''; toast('Listo: tu solicitud llegó.'); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); });
+  };
+  var cdf = $('#ciudadForm');
+  if (cdf) cdf.onsubmit = function (e) {
+    e.preventDefault(); if (BUSY) return; if (!ubOk()) return; busy(true);
+    call('guardarUbicacion', TOKEN, UB).then(function () { busy(false); LAST_STATE = ''; toast('Guardado'); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); });
+  };
+  var is = $('#irmeSi'); if (is) is.onclick = function () { IRME = true; render(); };
+  var ino = $('#irmeNo'); if (ino) ino.onclick = function () { IRME = false; render(); };
+  var iok = $('#irmeOk');
+  if (iok) iok.onclick = function () {
+    if (BUSY) return; busy(true);
+    call('irseDelArbol', TOKEN, ARBOL).then(function (res) {
+      busy(false); IRME = false; LAST_STATE = ''; MSEL = null; ARBOL = ''; lsSet('wm_arbol', '');
+      toast(res && res.quedan ? 'Seguís participando en tus otros árboles.' : 'Para volver hace falta una convocatoria nueva.');
+      return load();
+    }).catch(function (err) { busy(false); IRME = false; toast(errMsg(err), true); });
+  };
   var gm = $('#goMe'); if (gm) gm.onclick = goMe;
   bindSearch();
   Array.prototype.forEach.call(document.querySelectorAll('[data-gomap]'), function (b) { b.onclick = function () { goMap(b.getAttribute('data-gomap')); }; });
@@ -1144,7 +1247,8 @@ function bind() {
   var pf = $('#perfilForm');
   if (pf) pf.onsubmit = function (e) {
     e.preventDefault(); if (BUSY) return; busy(true);
-    call('cambiarPerfil', TOKEN, $('#pNombre').value, $('#pLoQueImporta').value).then(function () { busy(false); PERFIL = false; LAST_STATE = ''; toast('Perfil guardado'); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); });
+    if (!ubOk()) { busy(false); return; }
+    call('cambiarPerfil', TOKEN, $('#pNombre').value, $('#pLoQueImporta').value, UB).then(function () { busy(false); PERFIL = false; LAST_STATE = ''; toast('Perfil guardado'); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); });
   };
   var rf = $('#renameForm');
   if (rf) rf.onsubmit = function (e) {
@@ -1193,12 +1297,12 @@ function bind() {
     var v = function (id) { var x = $(id); return x ? x.value : ''; };
     call('pedirSumarme', TOKEN, ARBOL, v('#sNombre'), v('#sCorreo'), v('#sLoQueImporta'), v('#sMsg')).then(function (res) {
       busy(false); SUMAR = false; LAST_STATE = '';
-      toast(res.confirmar ? 'Te mandamos un correo: con su botón se confirma el pedido.' : 'Listo: el pedido llegó a la persona 1 del árbol.');
+      toast(res.confirmar ? 'Te mandamos un correo: con su botón se confirma la solicitud.' : 'Listo: la solicitud llegó.');
       return load();
     }).catch(function (err) { busy(false); toast(errMsg(err), true); });
   };
   Array.prototype.forEach.call(document.querySelectorAll('select[data-pedsel]'), function (sel) {
-    sel.onchange = function () { var o = sel.options[sel.selectedIndex], b = document.querySelector('[data-pedok="' + sel.getAttribute('data-pedsel') + '"]'); if (b) b.textContent = o.getAttribute('data-dueno') === '1' ? 'Convocar' : 'Proponer esta posición'; };
+    sel.onchange = function () { var o = sel.options[sel.selectedIndex], b = document.querySelector('[data-pedok="' + sel.getAttribute('data-pedsel') + '"]'); if (b) b.textContent = S.me && o.getAttribute('data-dueno') === S.me.pos ? 'Convocar' : 'Proponer esta posición'; };
   });
   Array.prototype.forEach.call(document.querySelectorAll('[data-pedok]'), function (b) {
     b.onclick = function () {
@@ -1206,7 +1310,7 @@ function bind() {
       call('asignarPedido', TOKEN, id, sel ? sel.value : '').then(function (res) { busy(false); LAST_STATE = ''; toast(res.invitada ? 'Convocatoria enviada por correo.' : 'Listo: ' + (res.dueno || 'la persona') + ' recibe el aviso para convocar.'); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); });
     };
   });
-  [['data-pedinv', 'invitarPedido', 'Convocatoria enviada por correo.'], ['data-peddev', 'devolverPedido', 'El pedido volvió a la persona 1.'], ['data-pedcer', 'cerrarPedido', 'Pedido cerrado.']].forEach(function (k) {
+  [['data-pedinv', 'invitarPedido', 'Convocatoria enviada por correo.'], ['data-peddev', 'devolverPedido', 'La solicitud volvió a quien coordina.'], ['data-pedcer', 'cerrarPedido', 'Solicitud cerrada.']].forEach(function (k) {
     Array.prototype.forEach.call(document.querySelectorAll('[' + k[0] + ']'), function (b) {
       b.onclick = function () { if (BUSY) return; busy(true); call(k[1], TOKEN, b.getAttribute(k[0])).then(function () { busy(false); LAST_STATE = ''; toast(k[2]); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); }); };
     });
@@ -1232,14 +1336,19 @@ function bind() {
   var tf = $('#temaForm');
   if (tf) tf.onsubmit = function (e) {
     e.preventDefault(); if (BUSY) return;
-    var tipo = document.querySelector('input[name="tTipo"]:checked');
     busy(true);
-    call('proponerTema', TOKEN, ARBOL, $('#tTema').value, tipo ? tipo.value : '', $('#tLugar').value).then(function (res) { busy(false); PROP = false; LAST_STATE = ''; toast(res.acordado ? '¡Tema acordado!' : 'Propuesta enviada. Falta que las otras personas de la semilla estén de acuerdo.'); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); });
+    call('proponerTema', TOKEN, ARBOL, $('#tTema').value, $('#tLugar').value).then(function (res) { busy(false); PROP = false; LAST_STATE = ''; toast(res.acordado ? '¡Tema acordado!' : 'Propuesta enviada. Falta que las otras personas de la semilla estén de acuerdo.'); return load(); }).catch(function (err) { busy(false); toast(errMsg(err), true); });
   };
-  Array.prototype.forEach.call(document.querySelectorAll('input[name="tTipo"]'), function (r) {
-    r.onchange = function () { var geo = r.value === 'Geográfico' && r.checked, box = $('#lugarBox'), li = $('#tLugar'); if (box) box.hidden = !geo; if (li) { li.required = geo; if (geo) li.focus(); } };
-  });
-
+  var tlb = $('#tLugarBuscar');
+  if (tlb) tlb.onclick = function () {
+    var box = $('#tLugarRes'), inp = $('#tLugar'); box.innerHTML = '<span class="small muted">Buscando…</span>';
+    call('buscarLugar', inp.value, 'zona', '').then(function (rs) {
+      if (!rs || !rs.length) { box.innerHTML = '<span class="small muted">No encontramos nada con ese texto. Se puede probar con otro.</span>'; return; }
+      box.innerHTML = rs.map(function (r, i) { return '<button type="button" class="ubopt" data-tzi="' + i + '"><b>' + esc(r.nombre) + '</b></button>'; }).join('');
+      Array.prototype.forEach.call(box.querySelectorAll('[data-tzi]'), function (o) { o.onclick = function () { inp.value = rs[Number(o.getAttribute('data-tzi'))].nombre; box.innerHTML = '<span class="small muted">Elegido: ' + esc(inp.value) + '</span>'; }; });
+    }).catch(function (e) { box.innerHTML = '<span class="small">' + esc(errMsg(e)) + '</span>'; });
+  };
+  var tpl = $('#tPlaneta'); if (tpl) tpl.onclick = function () { $('#tLugar').value = 'Todo el planeta'; $('#tLugarRes').innerHTML = ''; };
   var tno = $('#temaNo'); if (tno) tno.onclick = function () { PROP = false; render(); };
   var tot = $('#temaOtro'); if (tot) tot.onclick = function () { PROP = true; render(); var i = $('#tTema'); if (i) i.focus(); };
   var tok = $('#temaOk'); if (tok) tok.onclick = function () {
@@ -1257,7 +1366,7 @@ window.addEventListener('storage', function (e) {
 function start() {
   if (CONF && lsGet('wm_conf_used') !== CONF) {
     lsSet('wm_conf_used', CONF);
-    return call('confirmarPedido', CONF).then(function (res) { if (res.arbol) ARBOL = res.arbol; return load().then(function () { toast('Listo, ' + (res.nombre || '').split(' ')[0] + ': tu pedido llegó a la persona 1 del árbol.'); }); })
+    return call('confirmarPedido', CONF).then(function (res) { if (res.arbol) ARBOL = res.arbol; return load().then(function () { toast('Listo, ' + (res.nombre || '').split(' ')[0] + ': tu solicitud llegó.'); }); })
       .catch(function (e) { return load().then(function () { toast(errMsg(e), true); }); });
   }
   if (ACC && lsGet('wm_acc_used') !== ACC) {

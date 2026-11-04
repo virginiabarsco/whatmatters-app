@@ -1,6 +1,6 @@
 # WhatMatters · nota de traspaso
 
-Para retomar el trabajo en una conversación nueva. Última actualización: 4 de noviembre de 2026 (bloques 1 y 1b publicados, versión 49; **bloque 1c listo para publicar**).
+Para retomar el trabajo en una conversación nueva. Última actualización: 4 de noviembre de 2026 (bloques 1, 1b y 1c publicados, versión 50; **bloque 2 en discusión**).
 
 ## Cómo trabajamos
 
@@ -12,6 +12,7 @@ Para retomar el trabajo en una conversación nueva. Última actualización: 4 de
   - La prueba y la principal son la misma app publicada con dos enlaces; **comparten la misma planilla y los mismos datos** (lo que se hace en la prueba es real: los correos salen).
 - Publicar cuesta muchos pasos: juntar cambios y subir una vez. Para pasar a la principal se apunta a la **misma versión** ya probada.
 - Llevar una lista de cambios acordados y mostrarla antes de cada subida.
+- **Revisión antes de subir (decidido el 4 nov):** la copia local (test/harness.html, código real + simulador de Google) se publica como página privada y Virginia la recorre en compu y celular. Lleva un panel que muestra los correos simulados y un botón que arma un árbol de ejemplo desparejo (ramas hasta A5 y otras en A2). Capturas solo si ella pide que Claude mire algo.
 - Textos de la app sin imperativos. Terminar las respuestas con el enlace relevante.
 - Modelos: decidir reglas y diseño → Opus, esfuerzo alto. Aplicar cambios acordados y probar → Sonnet, medio. Publicar → Sonnet, bajo o medio. Abrir una conversación nueva por bloque.
 
@@ -26,9 +27,9 @@ Para retomar el trabajo en una conversación nueva. Última actualización: 4 de
 
 ## Estado al cierre
 
-- **Principal y prueba:** versión 49 = este repositorio (`app/`). Incluye los bloques 1 y 1b (ver abajo) sobre el diseño anterior: inicio con tres puertas, "Ver la red" con desplegable de árboles + mapa + lista, fondo de Montevideo con datos abiertos, modo claro/oscuro.
+- **Principal y prueba:** versión 50 = este repositorio (`app/`). Incluye los bloques 1, 1b y 1c (ver abajo) sobre el diseño anterior: inicio con tres puertas, "Ver la red" con desplegable de árboles + mapa + lista, fondo de Montevideo con datos abiertos, modo claro/oscuro.
 - **Migración hecha** (3 nov 2026): en la planilla "Invitada" pasó a "Convocada" (Personas y Quieren sumarse) y las columnas se llaman "Convocó (posición)" y "Fecha de convocatoria". El código sigue leyendo "Invitada" por si aparece alguna fila vieja.
-- **Pendiente:** ejecutar `ordenarPlanilla` desde el editor para reescribir la hoja "Cómo se juega". Se decidió hacerlo **después del bloque 2**, para no hacerlo dos veces; la hoja todavía muestra el texto viejo (lema "entrena", "invitación"). Antes, repasar con Opus el texto de la hoja: hay filas que contradicen reglas del bloque 2 (Árbol, Tríadas siguientes, Nombre del árbol/tipo, vencimiento de convocatorias), "Alcance" usa la palabra "nivel", faltan los estados de posición, el estado del árbol dice "tema" en vez de "nombre", y conviene separar lo del juego de lo de las pestañas. En el editor, el selector de funciones: abrirlo y elegir la opción con la herramienta de búsqueda de elementos (find + clic por referencia); hacer scroll dentro de la lista congeló la pestaña.
+- **Pendiente:** ejecutar `ordenarPlanilla` desde el editor para reescribir la hoja "Cómo se juega". Se decidió hacerlo **después del bloque 2**, para no hacerlo dos veces; la hoja todavía muestra el texto viejo (lema "entrena", "invitación"). Antes, repasar con Opus el texto de la hoja: hay filas que contradicen reglas del bloque 2 (Árbol, Tríadas siguientes, Nombre del árbol/tipo, vencimiento de convocatorias), "Alcance" usa la palabra "nivel", faltan los estados de posición, el estado del árbol dice "nombre" en vez de "tema", y conviene separar lo del juego de lo de las pestañas. En el editor, el selector de funciones: abrirlo y elegir la opción con la herramienta de búsqueda de elementos (find + clic por referencia); hacer scroll dentro de la lista congeló la pestaña.
 - Regla de texto: todo con mayúscula inicial en etiquetas y leyendas. La regla 1 del texto de bienvenida ("Se requiere una invitación para empezar") se deja como está.
 
 ## Bloque 1c · Aceptada, cifras de la red y Lo que importa (IMPLEMENTADO y publicado, versión 50)
@@ -51,6 +52,9 @@ Pendientes nuevos (4 nov):
   4. Si se va alguien de la semilla antes de acordar el tema: se borra su acuerdo; la propuesta de tema sigue en pie si la hizo otra persona y se borra si era suya. El tema necesita el acuerdo de las tres personas, incluida la nueva.
   5. Confirmación antes de irse (irse no tiene vuelta atrás; para volver hace falta una convocatoria nueva): "¿Irte de este árbol? Tu posición vuelve a Por convocar."
   6. La restricción actual de la administradora (solo quitar personas sin nadie en sus tríadas) deja de tener sentido y se reemplaza por esta misma lógica.
+- **Carga de la persona 1:** hoy todas las solicitudes nuevas le llegan a ella; con árboles grandes puede ser demasiado. Revisarlo cuando se discutan las solicitudes.
+- **Alcance máximo:** el juego llega hasta el alcance 20 (3²⁰ ≈ 3.500 millones de personas; el 21 superaría la población mundial). La app tiene hoy un tope de 10, que viene del MVP.
+- **Historial de participación de cada persona** (bloque 3 o 4): definir cómo funciona. Las convocatorias vencidas o canceladas hoy se borran de la planilla.
 - Tercer árbol, opción C (más adelante): que la persona apoye el árbol con un cupo de apoyo en lugar de ocupar una posición, cuando existan los apoyos.
 
 ## Bloque 1b · tema del árbol y textos de convocatoria (IMPLEMENTADO y publicado, versión 49)
@@ -68,7 +72,7 @@ Acordados y publicados el 3 nov 2026. La migración de columnas de Árboles ya s
 
 Pendientes nuevos:
 - Frase que explique que el botón del correo entra sin clave (por ahora no va ninguna).
-- **Cambiar el tema de un árbol** (bloque futuro): quién propone, qué umbral (probablemente decisión estructural: dos tercios, persona por persona) y el fork para quien no esté de acuerdo.
+- **Cambiar el tema y el lugar de un árbol** (bloque futuro; los árboles temáticos existentes quedan sin lugar hasta entonces): quién propone, qué umbral (probablemente decisión estructural: dos tercios, persona por persona) y el fork para quien no esté de acuerdo.
 - Revisar el texto de "Cómo funciona" y de la hoja "Cómo se juega" como una sola fuente (versión corta y larga).
 
 ## Vocabulario acordado
@@ -94,23 +98,51 @@ Pendientes nuevos:
 8. **Migración en la misma subida:** en la planilla, estado "Invitada" → "Convocada" (Personas y Quieren sumarse) y columna "Invitó (posición)" → "Convocó (posición)". El código tiene que leer los dos valores durante la migración.
 9. El aviso "Este enlace es personal: conviene no reenviarlo" en el correo de convocatoria queda como está.
 
-## Bloque 2 · reglas del juego (acordado, sin implementar; hacerlo en una conversación nueva con Opus)
+## Bloque 2 · reglas del juego (reglas cerradas el 4 nov, sin implementar; implementar con Sonnet)
+
+El botón para irse de un árbol (ver pendientes del bloque 1c, seis reglas aprobadas) **entra en este bloque** (decidido el 4 nov).
 
 0. Con el cambio a tema: "el freno del nombre" pasa a ser **el freno del tema**, y "acordar el nombre pide nombre y lugar" pasa a **tema y lugar**.
 1. **Convocar sin esperar:** cada persona puede llenar su propia tríada del alcance siguiente apenas entra, sin esperar a que se complete la tríada por la que entró.
    - Se mantiene el **freno del nombre**: hasta que la semilla acuerda el nombre no se abren tríadas siguientes.
    - **Límite de tres alcances:** el alcance N se abre solo si el alcance N−3 está completo (el 4 necesita el 1 completo; el 5, el 2; etc.). Con el freno del nombre, el primer límite que frena de verdad es el 5.
    - Quien quiera convocar en una tríada todavía bloqueada ve por qué ("Se abre cuando se complete el alcance 2").
-   - Probar que el mapa siga legible con árboles desparejos (ramas hasta A5 y otras en A2), en celular y compu, y mostrar capturas antes de subir.
+   - **Decidido el 4 nov:** hoy la primera tríada propia ya se abre apenas se entra; lo que cambia es que se saca la espera entre las tríadas propias de cada persona (hoy la siguiente espera a que la anterior esté completa). Los únicos frenos son el del tema y el límite de tres alcances.
+   - **Decidido el 4 nov:** si un alcance completo deja de estarlo (alguien se va o vence una convocatoria), el límite solo frena convocatorias nuevas; las posiciones aceptadas y las convocatorias pendientes de alcances más altos siguen valiendo.
+   - **Textos decididos el 4 nov:** "Se abre cuando la semilla acuerde el tema." y "Se abre cuando se complete el alcance N." Reemplazan los mensajes actuales ("se abre cuando se complete la que tenés en el alcance anterior").
+   - Probar que el mapa siga legible con árboles desparejos (ramas hasta A5 y otras en A2), en celular y compu. Virginia lo revisa en la copia local publicada como página (ver "Cómo trabajamos").
 2. **Vencimiento de convocatorias:** vencen a los **7 días**; recordatorio automático al **5.º día**; al vencer la posición vuelve a "Por convocar" y quien convocó recibe un aviso (puede convocar de nuevo, incluso a la misma persona). Necesita una tarea programada diaria en Apps Script (se instala ejecutando una función una vez desde el editor). La convocatoria existente a la posición 3.3 es a un correo de Virginia: sirve para probar que vence apenas se active la regla.
+   - **Decidido el 4 nov:**
+     - Recordatorio del 5.º día: a la persona convocada (el correo de convocatoria con la línea "Esta convocatoria vence el [fecha].") y también a quien convocó.
+     - Aviso al vencer: a quien convocó ("La convocatoria a [correo] para la posición N venció. La posición vuelve a Por convocar y se puede convocar de nuevo, también a la misma persona.") y también a la convocada.
+     - Al vencer se borra la fila de la planilla, igual que al cancelar.
+     - Convocatorias pendientes al activar la regla: el plazo cuenta desde su fecha original; las que ya pasaron el 5.º día reciben el recordatorio al activarse y vencen 2 días después (la de 3.3 prueba las dos cosas).
+     - Tarea diaria a las 9 (hora de Montevideo) para los correos; además, al abrir la app, una convocatoria con más de 7 días se muestra como Por convocar.
+     - Recordatorio a quien convocó: "Tu convocatoria a [correo] para la posición N vence el [fecha]. Se puede reenviar desde la app." Aviso de vencimiento a la convocada: "La convocatoria de X a su tríada del árbol «T» venció. Para sumarse hace falta una convocatoria nueva. Podés solicitarla acá:" + botón.
+     - "Reenviar convocatoria" reinicia los 7 días y el correo dice la fecha nueva.
+     - Si vence una convocatoria que salió de una solicitud, la solicitud no se reabre (opción A): la persona recibe el aviso con el botón para solicitar de nuevo.
+     - Página de convocatoria vencida: "Esta convocatoria venció. Para sumarse hace falta una convocatoria nueva. Podés solicitarla acá:" + botón "Solicitar sumarme". Si la persona ya está en tres árboles, el botón no aparece y se muestra el mensaje de los tres árboles.
+     - La solicitud que sale de una convocatoria vencida llega a quien convocó, ya asignada a la misma posición. Pasa a la persona 1, como cualquier otra, si quien convocó se fue del árbol o si la posición ya no está Por convocar.
+     - Los textos del ingreso con código ("Si no lo pediste…", "Se puede pedir uno nuevo", "Se puede pedir un código nuevo") quedan con "pedir".
+   - Vocabulario (4 nov): "solicitud" en lugar de "pedido" y "solicitar" en lugar de "pedir" cuando se trata de sumarse a un árbol (unos quince textos: mostrar la lista antes de implementar). "Quieren sumarse" y "Quiero sumarme" quedan como están.
 3. **Árbol / semilla:** nueva definición (ver vocabulario). Hoy el código marca árbol al completar el alcance 2: cambiarlo.
 4. **Subtítulo de cada árbol:** sacar el tipo (temático/geográfico). Mostrar: **alcance completo** (el más alto con todas sus posiciones ocupadas), **alcance en proceso** (el más alto con al menos una persona activa o convocada), **personas** (activas) y **tu posición** (solo si estás en ese árbol). Ejemplo: "Completo: 2 · En proceso: 4 · 12 personas · Tu posición: 1.2".
 5. **Lugar del árbol:** sin tipo; nombre y lugar para todos (acordar el nombre pide nombre y lugar). Ajustar las columnas Tipo/Lugar de la hoja Árboles.
 6. **Ciudad y lugar de cada persona** (al entrar y en Mi perfil), con el buscador de lugares incorporado de Apps Script (Maps.newGeocoder), sin pegar enlaces de Google Maps:
    - **Ciudad: obligatoria.**
-   - **Un lugar que te guste: opcional.** Texto acordado: "Un lugar que te guste, solo a los efectos de dibujar el mapa del juego. Puede ser una plaza, un parque, una cafetería, etc. No es obligatorio: si preferís no elegir uno, el mapa marca un punto central de la ciudad que elijas, por ejemplo Plaza Independencia si es Montevideo. Siempre se puede cambiar desde Mi perfil."
+   - **Un lugar que te guste: opcional.** Texto acordado (actualizado el 4 nov): "Un lugar que te guste, solo a los efectos de dibujar el mapa del juego, que es público. Puede ser una plaza, un parque, una cafetería, etc. No es obligatorio: si preferís no elegir uno, el mapa marca un punto central de la ciudad que elijas, por ejemplo Plaza Independencia si es Montevideo. Siempre se puede cambiar desde Mi perfil."
    - **Punto por defecto:** una lista propia con la plaza principal de cada ciudad donde ya hay gente (Montevideo → Plaza Independencia; Punta del Este → Plaza Artigas), que crece con las ciudades nuevas. Para las demás ciudades, el punto que da el buscador de Google (no siempre es una plaza; verificar dónde cae el de Montevideo).
    - Idea de fondo: que cada persona quede georreferenciada a un lugar donde estaría dispuesta a encontrarse, para que el juego potencie el encuentro virtual y presencial.
+
+### Decisiones del 4 nov (reglas 3 a 6 e irse)
+
+- Regla 3: "al menos una persona en el alcance 2" = una persona Aceptada (Convocada no alcanza). "Tríada base del tronco" solo aparece en la hoja "Cómo se juega" por ahora.
+- Regla 4: formato "Lugar · Completo: A2 · En proceso: A4 · 12 personas · X posiciones · Tu posición: 1.2", siempre con la A de Alcance y con personas y posiciones. Sin alcance completo no va "Completo" (ej.: "En proceso: A1 · 2 personas · 2 posiciones"); sin alcance en proceso por encima del completo no va "En proceso". Solo cuentan las Aceptadas. **Posiciones** se cuentan entrelazadas (quien está en 1 ocupa también 1.1, 1.1.1…), hasta el alcance más alto del árbol con alguien Aceptado: con el alcance 2 completo son 9 personas en 12 posiciones. Va en la tarjeta de cada árbol y arriba del árbol que se mira (reemplaza "N personas · árbol A5 · alcance 2 completo"). El lugar va al principio.
+- La red hoy: "X personas · X posiciones · X árboles" (sin "en"), con las posiciones contadas igual que en el subtítulo; una persona en varios árboles cuenta una vez. Se cuenta igual en todos lados.
+- Regla 5: el lugar del árbol se elige con el mismo buscador que la ciudad (ciudad, región o país) más la opción "Todo el planeta". Árboles existentes: los geográficos conservan su lugar; los temáticos quedan sin lugar. En la planilla se sacan las columnas de tipo y "Lugar (si es geográfico)" pasa a "Lugar".
+- Regla 6: a quienes ya están y no tienen ciudad se les pide una sola vez al entrar. Todas las personas participantes ven ciudad y lugar de todas. En este bloque se muestran en Mi perfil y en la tarjeta de cada persona ("Montevideo · Café Brasilero"). Plazas por defecto: pestaña "Ciudades" en la planilla (opción C), que arranca con Montevideo → Plaza Independencia y Punta del Este → Plaza Artigas; cada ciudad nueva se agrega sola con el punto de Google y la administradora lo puede cambiar por una plaza. Buscador: hasta cinco resultados por nombre o dirección, primero los de la ciudad elegida (puede no encontrar lugares chicos por nombre: se escribe la dirección). Quien todavía no entró ve todo, igual que quien entró (opción B).
+- Irse: los avisos de vencimiento de las convocatorias de quien se fue llegan a las otras dos personas de su tríada. Aviso: "[Nombre] se fue del árbol «T» y la posición N vuelve a Por convocar. La pueden convocar [A] y [B]." (a las otras dos de su tríada y a quienes estaban en las tríadas que convocó). Botón "Irme de este árbol" al pie del árbol. Se puede uno ir del único árbol; para volver hace falta una convocatoria nueva. Cuando la administradora quita a alguien salen los mismos avisos; la persona quitada recibe: "Tu posición en el árbol «T» volvió a Por convocar. Si querés saber más, se puede escribir a whatmatters.pro@gmail.com." + "Seguís participando en tus otros árboles." o, si era su único árbol, "Para volver hace falta una convocatoria nueva."
+- Vocabulario: "grupo apartado" y "grupo compartido" ya no se usan. Hay personas convocadas y aceptadas; siempre lenguaje amigable, no confrontativo.
 
 ## Bloque 3 · administración y búsqueda (acordado, sin implementar)
 
