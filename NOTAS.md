@@ -51,7 +51,13 @@ Acordado el 4 nov 2026, implementado y probado en el simulador (regresión sin e
 5. Abrir las dos con `?v=50`, actualizar este archivo y subirlo.
 
 Pendientes nuevos (4 nov):
-- **Botón para irse de un árbol** (bloque 2). Decidido el 4 nov: a las tríadas que convocó se les avisa que esa persona salió y ellas deciden qué hacen; la posición vuelve a "Por convocar" y el grupo se reorganiza para convocarla de nuevo; alguien de la semilla puede irse antes de que se acuerde el tema. Es lo que hace que "Puede sumarse a este cuando libere uno" se pueda cumplir. Preguntas abiertas: quién convoca la posición que quedó vacía, qué pasa con las convocatorias pendientes que había hecho, quién toma el papel de la persona 1 (pedidos para sumarse) si se va, y qué pasa con la propuesta de tema y los acuerdos si se va alguien de la semilla.
+- **Botón para irse de un árbol** (bloque 2). Decidido el 4 nov: a las tríadas que convocó se les avisa que esa persona salió y ellas deciden qué hacen; la posición vuelve a "Por convocar" y el grupo se reorganiza para convocarla de nuevo; alguien de la semilla puede irse antes de que se acuerde el tema. Es lo que hace que "Puede sumarse a este cuando libere uno" se pueda cumplir. Reglas aprobadas el 4 nov (propuestas de Claude, aceptadas todas):
+  1. Quién convoca la posición vacía: las otras dos personas de la tríada donde está esa posición (si se va la 2, convocan la 1 y la 3). Si se va la persona de una posición, quedan por convocar esa posición y toda su cadena (2.1, 2.1.1…), porque es la misma persona en cada alcance; quien la acepte hereda la cadena.
+  2. Convocatorias pendientes que había hecho: siguen valiendo (son convocatorias al árbol, no a la persona).
+  3. Si se va la persona 1: la tarea de coordinar los pedidos para sumarse pasa a quien acepte la posición 1 y, mientras tanto, a las otras dos personas de la semilla.
+  4. Si se va alguien de la semilla antes de acordar el tema: se borra su acuerdo; la propuesta de tema sigue en pie si la hizo otra persona y se borra si era suya. El tema necesita el acuerdo de las tres personas, incluida la nueva.
+  5. Confirmación antes de irse (irse no tiene vuelta atrás; para volver hace falta una convocatoria nueva): "¿Irte de este árbol? Tu posición vuelve a Por convocar."
+  6. La restricción actual de la administradora (solo quitar personas sin nadie en sus tríadas) deja de tener sentido y se reemplaza por esta misma lógica.
 - Tercer árbol, opción C (más adelante): que la persona apoye el árbol con un cupo de apoyo en lugar de ocupar una posición, cuando existan los apoyos.
 
 ## Bloque 1b · tema del árbol y textos de convocatoria (IMPLEMENTADO y publicado, versión 49)
