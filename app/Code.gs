@@ -330,7 +330,9 @@ function buildState_(correo, arbolPedido) {
   }
   var alcances = [], alcanzado = 0, activos = people.filter(function (p) { return p.estado === 'Aceptada'; }).length;
   var bases = [''];
-  for (var a = 1; a <= MAX_ALCANCE && bases.length; a++) {
+  // Se muestran los alcances hasta el más alto donde hay alguien Aceptada y uno más (el que se podría abrir); no hasta el tope de la app.
+  var topAlc = 0; people.forEach(function (p) { if (p.estado === 'Aceptada' && p.alcance > topAlc) topAlc = p.alcance; });
+  for (var a = 1; a <= MAX_ALCANCE && a <= topAlc + 1 && bases.length; a++) {
     var triadas = [], nextBases = [];
     bases.forEach(function (base) {
       var slots = base ? [base + '.1', base + '.2', base + '.3'] : ['1', '2', '3'];

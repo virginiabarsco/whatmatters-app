@@ -789,7 +789,7 @@ function mcard() {
     // Entrar es un hecho del pasado: quien está en el alcance 1 entró en la semilla, aunque hoy ya sea el tronco.
     var where = mlen(pid) > 1 ? 'en la tríada de ' + esc(M.owner[entry] || M.people[pidOfSlot(entry)] || 'P' + pidOfSlot(entry)) : 'en la semilla';
     if (act) {
-      var pos = [pid], x = pid; while (mlen(x) < M.D) { x += '.1'; pos.push(x); }
+      var TOPA = Math.max(1, S.arbol ? Math.max(S.arbol.completo || 0, S.arbol.enProceso || 0) : 1), pos = [pid], x = pid; while (mlen(x) < TOPA) { x += '.1'; pos.push(x); }
       var own = [], b = pid === '1' ? '' : pid; while (mlen(b) < M.D) { own.push(b); b = b === '' ? '1' : b + '.1'; }
       h += '<div class="who"><span class="pdot" style="--c:' + colorOf(pid) + '"></span><b class="name">' + esc(M.people[pid]) + (pid === M.me ? ' (vos)' : '') + '</b></div>';
       h += '<span class="small muted">Está en ' + pos.join(' · ') + '. ' + (pid === '1' ? 'Plantó la semilla' : 'Entró ' + where) + '.</span>' +
@@ -809,8 +809,8 @@ function mcard() {
       if (l.puedoInvitar) h += '<form class="inv" data-inv="' + pid + '"><input type="email" placeholder="Correo para convocar" aria-label="Correo para la posición ' + pid + '" required><button type="submit">Convocar</button></form>';
     }
   } else {
-    var tb = MSEL.b, m = M.D - mlen(tb), op = !!M.open[tb], compl = op && slotsOf(tb).every(function (x) { return !!M.people[pidOfSlot(x)]; });
-    h += '<b class="name">' + esc(triName(tb)) + ' · A' + (mlen(tb) + 1) + '</b><span class="small muted">Sus posiciones están en el alcance ' + (mlen(tb) + 1) + '. De ella cuelgan ' + num(Math.pow(3, m)) + ' posiciones hasta el alcance ' + M.D + ' del árbol · ' + (!op ? 'todavía sin abrir' : compl ? 'completa' : 'a medias') + '</span>';
+    var tb = MSEL.b, TOP = Math.max(1, S.arbol ? Math.max(S.arbol.completo || 0, S.arbol.enProceso || 0) : 1), m = Math.max(0, TOP - mlen(tb)), op = !!M.open[tb], compl = op && slotsOf(tb).every(function (x) { return !!M.people[pidOfSlot(x)]; });
+    h += '<b class="name">' + esc(triName(tb)) + ' · A' + (mlen(tb) + 1) + '</b><span class="small muted">Sus posiciones están en el alcance ' + (mlen(tb) + 1) + '. De ella cuelgan ' + num(Math.pow(3, m)) + ' posiciones hasta el alcance ' + TOP + ' del árbol · ' + (!op ? 'todavía sin abrir' : compl ? 'completa' : 'a medias') + '</span>';
     h += '<div class="chips">' + slotsOf(tb).map(function (sl) { var p = pidOfSlot(sl), a = !!M.people[p]; return '<span class="chipt" style="--c:' + (a ? colorOf(p) : 'var(--line)') + '">' + sl + ' · ' + esc(a ? M.people[p] : M.invited[p] ? 'Convocada' : 'P' + sl) + '</span>'; }).join('') + '</div>';
   }
   c.innerHTML = h; bind();
