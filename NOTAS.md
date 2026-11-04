@@ -51,7 +51,7 @@ Acordado el 4 nov 2026, implementado y probado en el simulador (regresión sin e
 5. Abrir las dos con `?v=50`, actualizar este archivo y subirlo.
 
 Pendientes nuevos (4 nov):
-- **Botón para irse de un árbol** (Virginia lo quiere). Definir antes: qué pasa con las tríadas que convocó esa persona y con las posiciones que dependen de la suya (por el entrelazado), si quien está en la semilla puede irse antes de acordar el tema, si se avisa a la tríada, y si la posición vuelve a "Por convocar". Es lo que hace que "Puede sumarse a este cuando libere uno" se pueda cumplir. Encaja con el bloque 2.
+- **Botón para irse de un árbol** (bloque 2). Decidido el 4 nov: a las tríadas que convocó se les avisa que esa persona salió y ellas deciden qué hacen; la posición vuelve a "Por convocar" y el grupo se reorganiza para convocarla de nuevo; alguien de la semilla puede irse antes de que se acuerde el tema. Es lo que hace que "Puede sumarse a este cuando libere uno" se pueda cumplir. Preguntas abiertas: quién convoca la posición que quedó vacía, qué pasa con las convocatorias pendientes que había hecho, quién toma el papel de la persona 1 (pedidos para sumarse) si se va, y qué pasa con la propuesta de tema y los acuerdos si se va alguien de la semilla.
 - Tercer árbol, opción C (más adelante): que la persona apoye el árbol con un cupo de apoyo en lugar de ocupar una posición, cuando existan los apoyos.
 
 ## Bloque 1b · tema del árbol y textos de convocatoria (IMPLEMENTADO y publicado, versión 49)
