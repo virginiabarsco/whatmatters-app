@@ -40,12 +40,12 @@ const ok = (nombre, cond, extra) => { if (!cond) fallas++; console.log((cond ? '
   const antes = await ev(() => __mails.length);
   await ev(() => {
     var s = sheet_(), n = s.getLastRow() - 1, dia = 864e5;
-    for (var i = 0; i < n; i++) { var r = i + 2; if (s.getRange(r, 6).getValue() === 'Convocada' && s.getRange(r, 4).getValue() === 'n@x.com') s.getRange(r, 7).setValue(new Date(Date.now() - 8 * dia)); }
+    for (var i = 0; i < n; i++) { var r = i + 2; if (s.getRange(r, physCol_(s, HEAD, 6)).getValue() === 'Convocada' && s.getRange(r, physCol_(s, HEAD, 4)).getValue() === 'n@x.com') s.getRange(r, physCol_(s, HEAD, 7)).setValue(new Date(Date.now() - 8 * dia)); }
     revisarConvocatorias();
   });
   const recs = await ev(() => mails().slice(-3));
   ok('a los días se manda el recordatorio', await ev(() => __mails.length) > antes, JSON.stringify(recs));
-  await ev(() => { var s = sheet_(), n = s.getLastRow() - 1; for (var i = 0; i < n; i++) { var c = s.getRange(i + 2, 14).getValue(); if (c) s.getRange(i + 2, 14).setValue(new Date(Date.now() - 3 * 864e5)); } revisarConvocatorias(); });
+  await ev(() => { var s = sheet_(), n = s.getLastRow() - 1; for (var i = 0; i < n; i++) { var c = s.getRange(i + 2, physCol_(s, HEAD, 14)).getValue(); if (c) s.getRange(i + 2, physCol_(s, HEAD, 14)).setValue(new Date(Date.now() - 3 * 864e5)); } revisarConvocatorias(); });
   const inv = await ev(() => { var k = Object.keys(__props).find(k => k.startsWith('inv_') && /n@x.com/.test(JSON.stringify(inviteFrom_(k.slice(4)) || {}))); return k ? k.slice(4) : ''; });
   const st = await ev((k) => { var s = getState('', k, 't1'); return s.invitacion; }, inv);
   ok('la convocatoria vencida se ve como Vencida', st && st.estado === 'Vencida', JSON.stringify(st));
@@ -63,7 +63,7 @@ const ok = (nombre, cond, extra) => { if (!cond) fallas++; console.log((cond ? '
   ok('pantalla de convocatoria vencida', !!(await page.$('#vencForm')) || /solicitud ya está enviada/.test(await ev(() => document.body.innerText)), await ev(() => document.body.innerText.slice(0, 200)));
   await page.screenshot({ path: SHOT('b2-vencida') });
   // --- pantalla: falta tu ciudad
-  await ev(() => { var s = sheet_(), n = s.getLastRow() - 1; for (var i = 0; i < n; i++) if (s.getRange(i + 2, 4).getValue() === 'i3@x.com') { s.getRange(i + 2, 11).setValue(''); s.getRange(i + 2, 12).setValue(''); s.getRange(i + 2, 13).setValue(''); } INV = ''; TOKEN = T['i3@x.com']; lsSet('wm_red_token', TOKEN); ARBOL = 't1'; LAST_STATE = ''; return load(); }); await page.waitForTimeout(400);
+  await ev(() => { var s = sheet_(), n = s.getLastRow() - 1; for (var i = 0; i < n; i++) if (s.getRange(i + 2, physCol_(s, HEAD, 4)).getValue() === 'i3@x.com') { [11, 12, 13].forEach(function (k) { s.getRange(i + 2, physCol_(s, HEAD, k)).setValue(''); }); } INV = ''; TOKEN = T['i3@x.com']; lsSet('wm_red_token', TOKEN); ARBOL = 't1'; LAST_STATE = ''; return load(); }); await page.waitForTimeout(400);
   ok('si falta la ciudad, se pide', !!(await page.$('#ciudadForm')));
   await page.fill('#ubCiudad', 'Montevideo'); await page.click('[data-ubbuscar="ciudad"]'); await page.waitForTimeout(300);
   await page.click('#ubCiudadRes .ubopt'); await page.screenshot({ path: SHOT('b2-ciudad') });

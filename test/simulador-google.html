@@ -13,6 +13,10 @@ if (!/fresh/.test(location.search)) {
 <script>(function () {
   function Sheet(name) { this.name = name; this.rows = []; }
   Sheet.prototype.getLastRow = function () { return this.rows.length; };
+  Sheet.prototype.getLastColumn = function () { return this.rows.reduce(function (m, r) { return Math.max(m, r.length); }, 0); };
+  Sheet.prototype.getName = function () { return this.name; };
+  Sheet.prototype.insertColumnBefore = function (c) { this.rows.forEach(function (row) { row.splice(c - 1, 0, ''); }); };
+  Sheet.prototype.hideColumns = function (c) { (this.hidden = this.hidden || {})[c] = true; };
   Sheet.prototype.cell = function (r, c) { var row = this.rows[r - 1]; return row && row[c - 1] !== undefined ? row[c - 1] : ''; };
   Sheet.prototype.put = function (r, c, v) { while (this.rows.length < r) this.rows.push([]); this.rows[r - 1][c - 1] = v; };
   Sheet.prototype.getRange = function (a, b, c, d) { if (typeof a === 'string') return new Range(this, 1, 1, 1, 1); return new Range(this, a, b, c || 1, d || 1); };
@@ -119,12 +123,12 @@ if (window.__PRESET_ROWS) { var sh = window.__book.insertSheet('Personas'); wind
   function pasar8Dias() {
     var s = sheet_(), n = s.getLastRow() - 1, dia = 864e5;
     for (var i = 0; i < n; i++) {
-      var r = i + 2, est = s.getRange(r, 6).getValue();
+      var r = i + 2, est = s.getRange(r, physCol_(s, HEAD, 6)).getValue();
       if (est !== 'Convocada' && est !== 'Invitada') continue;
-      var f = s.getRange(r, 7).getValue(); if (f) s.getRange(r, 7).setValue(new Date(new Date(f).getTime() - 8 * dia));
+      var c7 = physCol_(s, HEAD, 7), f = s.getRange(r, c7).getValue(); if (f) s.getRange(r, c7).setValue(new Date(new Date(f).getTime() - 8 * dia));
     }
     revisarConvocatorias();
-    for (var j = 0; j < n; j++) { var rr = j + 2, c = s.getRange(rr, 14).getValue(); if (c) s.getRange(rr, 14).setValue(new Date(new Date(c).getTime() - 3 * dia)); }
+    for (var j = 0; j < n; j++) { var rr = j + 2, c14 = physCol_(s, HEAD, 14), c = s.getRange(rr, c14).getValue(); if (c) s.getRange(rr, c14).setValue(new Date(new Date(c).getTime() - 3 * dia)); }
     revisarConvocatorias();
   }
   // Un árbol desparejo: un camino llega al alcance 5, otras ramas se quedan en el 2 y alguna tríada está a medias.
@@ -135,12 +139,11 @@ if (window.__PRESET_ROWS) { var sh = window.__book.insertSheet('Personas'); wind
     var nom = ['Lucía Pérez', 'Mateo Silva', 'Valentina Gómez', 'Joaquín Rivas', 'Camila Duarte', 'Santiago Mora', 'Florencia Paz', 'Nicolás Vega', 'Julieta Ríos', 'Tomás Acosta', 'Martina Soto', 'Bruno Ferrari', 'Emilia Costa', 'Lautaro Núñez', 'Renata Blanco', 'Ignacio Cruz'];
     var tema = ['Cuidar el agua', 'Cocina de barrio', 'Música en la plaza', 'Huertas urbanas', 'Cine y debate', 'Bicicletas', 'Lectura compartida', 'Mar limpio', 'Teatro', 'Aprender idiomas', 'Fotografía', 'Ajedrez', 'Clima', 'Educación', 'Arte', 'Salud mental'];
     var sh = sheet_(), ash = SpreadsheetApp.getActive().getSheetByName('Árboles'), arow = Math.max(ash.getLastRow(), 1) + 1;
-    ash.getRange(arow, 1, 1, ACOLS).setValues([[id, 'Cuidar el agua', 'Uruguay', 'Tema acordado', 'ej1@x.com', new Date(2026, 9, 1), '', '', '', '1,2,3', new Date(2026, 9, 3), '']]);
+    putRow_(ash, AHEAD, arow, [id, 'Cuidar el agua', 'Uruguay', 'Tema acordado', 'ej1@x.com', new Date(2026, 9, 1), '', '', '', '1,2,3', new Date(2026, 9, 3), '']);
     var row = Math.max(sh.getLastRow(), 1) + 1;
     pos.forEach(function (p, i) {
       var c = ciud[i % ciud.length], depth = p.split('.').length, inv = depth === 1 ? '' : p.split('.').slice(0, -1).join('.') || '1';
-      sh.getRange(row + i, 1, 1, COLS).setValues([[p, depth, nom[i], 'ej' + (i + 1) + '@x.com', i < 3 ? (i ? '1' : '') : (inv === '1' ? '1' : (pos.indexOf(inv) >= 0 ? inv : '1')), 'Aceptada', new Date(2026, 9, 1 + depth), new Date(2026, 9, 1 + depth), tema[i], id, c[0], '', c[1], '']]);
-      sh.getRange(row + i, 1).setNumberFormat('@');
+      putRow_(sh, HEAD, row + i, [p, depth, nom[i], 'ej' + (i + 1) + '@x.com', i < 3 ? (i ? '1' : '') : (inv === '1' ? '1' : (pos.indexOf(inv) >= 0 ? inv : '1')), 'Aceptada', new Date(2026, 9, 1 + depth), new Date(2026, 9, 1 + depth), tema[i], id, c[0], '', c[1], '']);
     });
     window.TOKEN = login('ej1@x.com'); lsSet('wm_red_token', TOKEN); ARBOL = id; LAST_STATE = ''; VISTA = 'inicio'; load();
   }

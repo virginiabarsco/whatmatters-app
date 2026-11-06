@@ -6,11 +6,15 @@ var SHEET = 'Personas';
 var SHEET_ARB = 'Árboles';
 var MAX_ALCANCE = 10;
 var MAX_ARBOLES = 3;
-var COLS = 14; // Posición, Alcance de entrada, Nombre, Correo, Convocó, Estado, Fecha de convocatoria, Fecha de entrada, Lo que importa, Árbol, Ciudad, Un lugar que te guste, Punto del mapa, Recordatorio de vencimiento
-var HEAD = ['Posición', 'Alcance de entrada', 'Nombre', 'Correo', 'Convocó (posición)', 'Estado', 'Fecha de convocatoria', 'Fecha de entrada', 'Lo que importa', 'Árbol', 'Ciudad', 'Un lugar que te guste', 'Punto del mapa', 'Recordatorio de vencimiento'];
+var COLS = 14; // Orden lógico del código: Posición, Alcance de entrada, Nombre, Correo, Convocada por, Estado, Fecha de convocatoria, Fecha de entrada, Lo que importa, Árbol, Ciudad, Un lugar que te guste, Punto del mapa, Recordatorio de vencimiento
+var HEAD = ['Posición', 'Alcance de entrada', 'Nombre', 'Correo', 'Convocada por (posición)', 'Estado', 'Fecha de convocatoria', 'Fecha de entrada', 'Lo que importa', 'Árbol', 'Ciudad', 'Un lugar que te guste', 'Punto del mapa', 'Recordatorio de vencimiento'];
+// Orden de las columnas al crear la hoja Personas (Árbol va antes de Posición). La app las busca por el nombre de la cabecera, así que el orden se puede cambiar a mano.
+var HEAD_FIS = ['Árbol', 'Posición', 'Alcance de entrada', 'Nombre', 'Correo', 'Convocada por (posición)', 'Estado', 'Fecha de convocatoria', 'Fecha de entrada', 'Lo que importa', 'Ciudad', 'Un lugar que te guste', 'Punto del mapa', 'Recordatorio de vencimiento'];
+// Nombres anteriores de algunas columnas: la app los sigue reconociendo.
+var COL_ALT = { 'Convocada por (posición)': ['Convocó (posición)'], 'Posición elegida': ['Lugar'], 'Decide (posición)': ['Asignado a (posición)'], 'Por convocar por salida': ['Posiciones por convocar por salida'] };
 var FORMATS = [['@', '0', '@', '@', '@', '@', 'dd/mm/yyyy', 'dd/mm/yyyy', '@', '@', '@', '@', '@', 'dd/mm/yyyy']];
 var ACOLS = 12;
-var AHEAD = ['Árbol', 'Tema', 'Lugar', 'Estado', 'Plantó (correo)', 'Fecha', 'Propuesta: tema', 'Propuesta: lugar', 'Propuso (posición)', 'De acuerdo (posiciones)', 'Fecha del acuerdo', 'Posiciones por convocar por salida'];
+var AHEAD = ['Árbol', 'Tema', 'Lugar', 'Estado', 'Plantó (correo)', 'Fecha', 'Propuesta: tema', 'Propuesta: lugar', 'Propuso (posición)', 'De acuerdo (posiciones)', 'Fecha del acuerdo', 'Por convocar por salida'];
 var SHEET_CIU = 'Ciudades';
 var CHEAD = ['Ciudad', 'Plaza o punto central', 'Latitud', 'Longitud', 'Origen'];
 var CIUDADES_INICIALES = [['Montevideo, Uruguay', 'Plaza Independencia'], ['Punta del Este, Uruguay', 'Plaza Artigas']];
@@ -20,7 +24,7 @@ var DIAS_RECORDATORIO = 5;   // recordatorio al 5.º día
 var DIAS_TRAS_AVISO = 2;     // ninguna vence sin aviso: pasan al menos 2 días desde el recordatorio
 var SHEET_SUM = 'Quieren sumarse';
 var QCOLS = 12;
-var QHEAD = ['Id', 'Fecha', 'Árbol', 'Nombre', 'Correo', 'Lo que importa', 'Mensaje', 'Estado', 'Lugar', 'Asignado a (posición)', 'Clave', 'Fecha de cierre'];
+var QHEAD = ['Id', 'Fecha', 'Árbol', 'Nombre', 'Correo', 'Lo que importa', 'Mensaje', 'Estado', 'Posición elegida', 'Decide (posición)', 'Clave', 'Fecha de cierre'];
 var DIAS_PEDIDO = 30;
 var SEMILLA = ['1', '2', '3'];
 
@@ -62,26 +66,61 @@ function sheet_() { return SpreadsheetApp.getActive().getSheetByName(SHEET); }
 function sheetArb_() { return SpreadsheetApp.getActive().getSheetByName(SHEET_ARB); }
 function headerStyle_(r) { return r.setFontWeight('bold').setBackground('#1F4E3D').setFontColor('#FFFFFF'); }
 
+// ---------- columnas por nombre ----------
+// La app busca cada columna por el nombre de su cabecera (en la primera fila), así que se pueden mover o ocultar a mano sin romper nada.
+var colCache_ = {};
+function resetCols_() { colCache_ = {}; }
+function colsOf_(sh, heads) {
+  var key = sh.getName() + '|' + heads.length;
+  if (colCache_[key]) return colCache_[key];
+  var w = Math.max(sh.getLastColumn(), heads.length);
+  var hdr = sh.getRange(1, 1, 1, w).getValues()[0].map(function (x) { return String(x == null ? '' : x).trim(); });
+  var m = heads.map(function (nombre, i) {
+    var cand = [nombre].concat(COL_ALT[nombre] || []);
+    for (var k = 0; k < cand.length; k++) { var j = hdr.indexOf(cand[k]); if (j >= 0) return j + 1; }
+    return i + 1;
+  });
+  colCache_[key] = m;
+  return m;
+}
+function physCol_(sh, heads, i) { return colsOf_(sh, heads)[i - 1]; }
+// Las n filas de datos, con las columnas en el orden lógico de heads.
+function readTable_(sh, heads, n) {
+  var m = colsOf_(sh, heads), w = Math.max.apply(null, m);
+  return sh.getRange(2, 1, n, w).getValues().map(function (r) { return m.map(function (c) { return r[c - 1]; }); });
+}
+// Escribe una fila nueva completa (vals en el orden lógico de heads; fmts opcional).
+function putRow_(sh, heads, row, vals, fmts) {
+  var m = colsOf_(sh, heads), w = Math.max(Math.max.apply(null, m), sh.getLastColumn()), out = [], of = [];
+  for (var c = 0; c < w; c++) { out.push(''); of.push('General'); }
+  m.forEach(function (c, i) { out[c - 1] = vals[i] === undefined ? '' : vals[i]; if (fmts) of[c - 1] = fmts[i]; });
+  var r = sh.getRange(row, 1, 1, w);
+  if (fmts) r.setNumberFormats([of]);
+  r.setValues([out]);
+}
+// Escribe varias celdas seguidas del orden lógico (first = índice lógico de la primera).
+function putCells_(sh, heads, row, first, vals) {
+  vals.forEach(function (v, i) { sh.getRange(row, physCol_(sh, heads, first + i)).setValue(v); });
+}
+
 function ensureSetup_() {
   var props = PropertiesService.getScriptProperties();
-  if (props.getProperty('setup_simple_v1') === 'ok' && props.getProperty('setup_tema_v1') === 'ok' && props.getProperty('setup_arboles_v1') === 'ok' && props.getProperty('setup_bloque2_v1') === 'ok') return;
+  if (props.getProperty('setup_simple_v1') === 'ok' && props.getProperty('setup_tema_v1') === 'ok' && props.getProperty('setup_arboles_v1') === 'ok' && props.getProperty('setup_bloque2_v1') === 'ok' && props.getProperty('setup_columnas_v1') === 'ok') return;
   withLock_(function () {
     var ss = SpreadsheetApp.getActive();
     var s = sheet_();
     if (!s) {
       s = ss.insertSheet(SHEET, 0);
-      headerStyle_(s.getRange(1, 1, 1, COLS).setValues([HEAD]));
-      s.getRange('A:A').setNumberFormat('@');
-      s.getRange('E:E').setNumberFormat('@');
+      headerStyle_(s.getRange(1, 1, 1, COLS).setValues([HEAD_FIS]));
+      s.getRange('A:B').setNumberFormat('@');
+      s.getRange('F:F').setNumberFormat('@');
       s.setFrozenRows(1);
-      s.setColumnWidth(1, 110); s.setColumnWidth(3, 180); s.setColumnWidth(4, 240); s.setColumnWidth(5, 120); s.setColumnWidth(9, 220);
+      s.setColumnWidth(1, 70); s.setColumnWidth(2, 110); s.setColumnWidth(4, 180); s.setColumnWidth(5, 240); s.setColumnWidth(6, 120); s.setColumnWidth(10, 220);
     }
-    if (!s.getRange(1, 9).getValue()) headerStyle_(s.getRange(1, 9).setValue(HEAD[8]));
-    if (!s.getRange(1, 10).getValue()) headerStyle_(s.getRange(1, 10).setValue(HEAD[9]));
     // Las filas de antes de que hubiera varios árboles son del primer árbol.
     var n = s.getLastRow() - 1;
     if (n > 0) {
-      var col = s.getRange(2, 10, n, 1);
+      var col = s.getRange(2, physCol_(s, HEAD, 10), n, 1);
       var vals = col.getValues();
       if (vals.some(function (r) { return !r[0]; })) col.setValues(vals.map(function (r) { return [r[0] || 't1']; }));
     }
@@ -105,11 +144,44 @@ function ensureSetup_() {
     headerStyle_(s.getRange(1, 11, 1, 4).setValues([HEAD.slice(10)]));
     s.getRange('K:M').setNumberFormat('@');
     ciudadesSheet_();
+    migrarColumnas_();
   });
   props.setProperty('setup_simple_v1', 'ok');
   props.setProperty('setup_tema_v1', 'ok');
   props.setProperty('setup_arboles_v1', 'ok');
   props.setProperty('setup_bloque2_v1', 'ok');
+  props.setProperty('setup_columnas_v1', 'ok');
+}
+// Planilla nueva: en Personas la columna Árbol va antes de Posición; cabeceras con nombres más claros; en Quieren sumarse se ocultan Id y Clave (son internas).
+// Es segura de repetir: si ya está hecho, no cambia nada.
+function migrarColumnas_() {
+  var ss = SpreadsheetApp.getActive(), s = sheet_();
+  if (s) {
+    var w = Math.max(s.getLastColumn(), COLS);
+    var hdr = s.getRange(1, 1, 1, w).getValues()[0].map(function (x) { return String(x == null ? '' : x).trim(); });
+    var j = hdr.indexOf('Árbol');
+    if (j > 0) {
+      var n = s.getLastRow();
+      s.insertColumnBefore(1);
+      s.getRange(1, 1, n, 1).setValues(s.getRange(1, j + 2, n, 1).getValues());
+      s.deleteColumn(j + 2);
+      s.getRange('A:B').setNumberFormat('@');
+      s.setColumnWidth(1, 70);
+      headerStyle_(s.getRange(1, 1, 1, 1));
+    }
+    resetCols_();
+    s.getRange(1, physCol_(s, HEAD, 5)).setValue(HEAD[4]);
+  }
+  var a = sheetArb_();
+  if (a) { resetCols_(); a.getRange(1, physCol_(a, AHEAD, 12)).setValue(AHEAD[11]); }
+  var q = ss.getSheetByName(SHEET_SUM);
+  if (q) {
+    resetCols_();
+    q.getRange(1, physCol_(q, QHEAD, 9)).setValue(QHEAD[8]);
+    q.getRange(1, physCol_(q, QHEAD, 10)).setValue(QHEAD[9]);
+    q.hideColumns(physCol_(q, QHEAD, 1)); q.hideColumns(physCol_(q, QHEAD, 11));
+  }
+  resetCols_();
 }
 // La pestaña Ciudades: una fila por ciudad con la plaza (o punto central) que el mapa usa cuando alguien no elige un lugar.
 // Las ciudades nuevas se agregan solas con el punto que da Google; la administradora puede cambiar el nombre de la plaza y borrar latitud y longitud para que se busquen de nuevo.
@@ -145,7 +217,7 @@ function readAll_(conVencidas) {
   var s = sheet_();
   var n = s.getLastRow() - 1;
   if (n < 1) return [];
-  var out = s.getRange(2, 1, n, COLS).getValues().map(function (r, i) {
+  var out = readTable_(s, HEAD, n).map(function (r, i) {
     var p = { row: i + 2, pos: String(r[0]), alcance: Number(r[1]) || depth_(r[0]), nombre: clean_(r[2], 60), correo: normMail_(r[3]),
       invito: String(r[4] || ''), estado: legado_(clean_(r[5])) || 'Convocada', fInv: fmtDate_(r[6]), fInvMs: dateMs_(r[6]), fEnt: fmtDate_(r[7]), loQueImporta: cleanLoQueImporta_(r[8]),
       arbol: String(r[9] || 't1'), ent: dateMs_(r[7]), ciudad: clean_(r[10], 80), lugar: clean_(r[11], 120), punto: String(r[12] || ''), rec: dateMs_(r[13]) };
@@ -162,7 +234,7 @@ function readTrees_() {
   if (!a) return [];
   var n = a.getLastRow() - 1;
   if (n < 1) return [];
-  return a.getRange(2, 1, n, ACOLS).getValues().map(function (r, i) {
+  return readTable_(a, AHEAD, n).map(function (r, i) {
     var lista = function (v) { return String(v || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean); };
     var prop = r[6] ? { tema: clean_(r[6], 60), lugar: clean_(r[7], 240), de: String(r[8] || '') } : null;
     return { row: i + 2, id: String(r[0]), tema: clean_(r[1], 60), lugar: clean_(r[2], 240),
@@ -177,8 +249,8 @@ function index_(people) { var m = {}; people.forEach(function (p) { m[p.pos] = p
 function appendTree_(id, correo) {
   var a = sheetArb_();
   var row = Math.max(a.getLastRow(), 1) + 1;
-  a.getRange(row, 1, 1, ACOLS).setValues([[id, '', '', 'Sin tema', correo, new Date(), '', '', '', '', '', '']]);
-  a.getRange(row, 1).setNumberFormat('@');
+  putRow_(a, AHEAD, row, [id, '', '', 'Sin tema', correo, new Date(), '', '', '', '', '', '']);
+  a.getRange(row, physCol_(a, AHEAD, 1)).setNumberFormat('@');
   return row;
 }
 function pad_(fila) { while (fila.length < COLS) fila.push(''); return fila; }
@@ -563,10 +635,10 @@ function ocuparLugar_(correo, nombre, loQueImporta, ubic) {
   if (act) return { aviso: null, arbol: act.arbol };
   var mine = rows.filter(function (p) { return p.estado === 'Convocada'; })[0];
   if (mine) {
-    s.getRange(mine.row, 3).setValue(nombre);
-    s.getRange(mine.row, 6).setValue('Aceptada');
-    s.getRange(mine.row, 8).setValue(new Date());
-    s.getRange(mine.row, 9).setValue(loQueImporta);
+    s.getRange(mine.row, physCol_(s, HEAD, 3)).setValue(nombre);
+    s.getRange(mine.row, physCol_(s, HEAD, 6)).setValue('Aceptada');
+    s.getRange(mine.row, physCol_(s, HEAD, 8)).setValue(new Date());
+    s.getRange(mine.row, physCol_(s, HEAD, 9)).setValue(loQueImporta);
     escribirUbic_(mine.row, ubicDeFila_(ubic));
     dropInvites_(correo, mine.arbol);
     var inv = peopleOf_(all, mine.arbol).filter(function (p) { return p.pos === mine.invito; })[0];
@@ -576,8 +648,7 @@ function ocuparLugar_(correo, nombre, loQueImporta, ubic) {
     var trees = readTrees_();
     var id = treeById_(trees, 't1') ? nextTreeId_(trees) : 't1';
     if (!treeById_(trees, id)) appendTree_(id, correo);
-    s.getRange(2, 1, 1, COLS).setNumberFormats(FORMATS);
-    s.getRange(2, 1, 1, COLS).setValues([pad_(['1', 1, nombre, correo, '', 'Aceptada', new Date(), new Date(), loQueImporta, id])]);
+    putRow_(s, HEAD, 2, pad_(['1', 1, nombre, correo, '', 'Aceptada', new Date(), new Date(), loQueImporta, id]), FORMATS[0]);
     escribirUbic_(2, ubicDeFila_(ubic));
     return { aviso: null, arbol: id };
   }
@@ -643,11 +714,11 @@ function activar_(all, correo, arbol, nombre, loQueImporta, ub) {
   if (!mine) fail_('Esta convocatoria fue cancelada.');
   if (mine.estado === 'Aceptada') return null;
   var s = sheet_();
-  s.getRange(mine.row, 3).setValue(nombre);
-  s.getRange(mine.row, 6).setValue('Aceptada');
-  s.getRange(mine.row, 8).setValue(new Date());
-  s.getRange(mine.row, 9).setValue(loQueImporta);
-  s.getRange(mine.row, 14).setValue('');
+  s.getRange(mine.row, physCol_(s, HEAD, 3)).setValue(nombre);
+  s.getRange(mine.row, physCol_(s, HEAD, 6)).setValue('Aceptada');
+  s.getRange(mine.row, physCol_(s, HEAD, 8)).setValue(new Date());
+  s.getRange(mine.row, physCol_(s, HEAD, 9)).setValue(loQueImporta);
+  s.getRange(mine.row, physCol_(s, HEAD, 14)).setValue('');
   escribirUbic_(mine.row, ub);
   quitarVacante_(arbol, mine.pos); // si era una posición que quedó por convocar porque alguien se fue, ya está ocupada
   var avisa = quienesConvocaron_(people, mine.invito)[0];
@@ -732,8 +803,7 @@ function invitar(token, arbol, pos, correoInvitado) {
     }
     var s = sheet_();
     var row = Math.max(s.getLastRow(), 1) + 1;
-    s.getRange(row, 1, 1, COLS).setNumberFormats(FORMATS);
-    s.getRange(row, 1, 1, COLS).setValues([pad_([pos, depth_(pos), '', correoInvitado, me.pos, 'Convocada', new Date(), '', '', arbol])]);
+    putRow_(s, HEAD, row, pad_([pos, depth_(pos), '', correoInvitado, me.pos, 'Convocada', new Date(), '', '', arbol]), FORMATS[0]);
     return { de: me.nombre || me.correo, pos: pos, row: row, tree: tree };
   });
   dropInvites_(correoInvitado, arbol); // los enlaces de una convocatoria anterior (vencida) a esta misma persona dejan de valer
@@ -757,7 +827,7 @@ function reenviarInvitacion(token, arbol, pos) {
   var tree = treeById_(readTrees_(), arbol);
   // Reenviar reinicia los 7 días: el correo dice la fecha nueva.
   var hasta = new Date(Date.now() + DIAS_CONVOCATORIA * 864e5);
-  withLock_(function () { sheet_().getRange(target.row, 7).setValue(new Date()); sheet_().getRange(target.row, 14).setValue(''); });
+  withLock_(function () { sheet_().getRange(target.row, physCol_(sheet_(), HEAD, 7)).setValue(new Date()); sheet_().getRange(target.row, physCol_(sheet_(), HEAD, 14)).setValue(''); });
   var lineas = inviteLines_(me.nombre || me.correo, target.pos, tree);
   lineas.splice(lineas.length - 1, 0, 'Esta convocatoria vence el ' + fmtDate_(hasta) + '.');
   sendMail_(target.correo, (me.nombre || me.correo) + ' te convoca a su tríada en WhatMatters', lineas, 'Ver la convocatoria', inviteLink_(target.correo, arbol));
@@ -800,8 +870,7 @@ function plantarArbol(token, correo2, correo3) {
     appendTree_(id, yo.correo);
     var s = sheet_();
     var row = Math.max(s.getLastRow(), 1) + 1;
-    s.getRange(row, 1, 1, COLS).setNumberFormats(FORMATS);
-    s.getRange(row, 1, 1, COLS).setValues([pad_(['1', 1, yo.activa.nombre, yo.correo, '', 'Aceptada', new Date(), new Date(), yo.activa.loQueImporta, id])]);
+    putRow_(s, HEAD, row, pad_(['1', 1, yo.activa.nombre, yo.correo, '', 'Aceptada', new Date(), new Date(), yo.activa.loQueImporta, id]), FORMATS[0]);
     escribirUbic_(row, { ciudad: yo.activa.ciudad, lugar: yo.activa.lugar, punto: yo.activa.punto });
     return id;
   });
@@ -826,10 +895,10 @@ function semillaYo_(token, arbol) {
 function cerrarAcuerdo_(tree, people, acuerdos) {
   var a = sheetArb_();
   var activos = SEMILLA.filter(function (pos) { return people.some(function (p) { return p.pos === pos && p.estado === 'Aceptada'; }); });
-  a.getRange(tree.row, 10).setValue(acuerdos.join(','));
+  a.getRange(tree.row, physCol_(a, AHEAD, 10)).setValue(acuerdos.join(','));
   if (activos.length === 3 && SEMILLA.every(function (pos) { return acuerdos.indexOf(pos) >= 0; })) {
-    a.getRange(tree.row, 2, 1, 3).setValues([[tree.prop.tema, tree.prop.lugar, 'Tema acordado']]);
-    a.getRange(tree.row, 11).setValue(new Date());
+    putCells_(a, AHEAD, tree.row, 2, [tree.prop.tema, tree.prop.lugar, 'Tema acordado']);
+    a.getRange(tree.row, physCol_(a, AHEAD, 11)).setValue(new Date());
     return true;
   }
   return false;
@@ -841,7 +910,7 @@ function proponerTema(token, arbol, tema, lugar) {
   if (!lugar) fail_('Falta el lugar del árbol.');
   return withLock_(function () {
     var d = semillaYo_(token, String(arbol || ''));
-    sheetArb_().getRange(d.tree.row, 7, 1, 3).setValues([[tema, lugar, d.me.pos]]);
+    putCells_(sheetArb_(), AHEAD, d.tree.row, 7, [tema, lugar, d.me.pos]);
     d.tree.prop = { tema: tema, lugar: lugar, de: d.me.pos };
     return { acordado: cerrarAcuerdo_(d.tree, d.people, [d.me.pos]) };
   });
@@ -866,13 +935,14 @@ function sheetSum_() {
     headerStyle_(s.getRange(1, 1, 1, QCOLS).setValues([QHEAD]));
     s.getRange('A:A').setNumberFormat('@'); s.getRange('I:J').setNumberFormat('@');
     s.setFrozenRows(1); s.setColumnWidth(4, 180); s.setColumnWidth(5, 220); s.setColumnWidth(7, 300);
+    s.hideColumns(1); s.hideColumns(11); // Id y Clave son internas
   }
   return s;
 }
 function readPedidos_() {
   var s = sheetSum_(), n = s.getLastRow() - 1;
   if (n < 1) return [];
-  return s.getRange(2, 1, n, QCOLS).getValues().map(function (r, i) {
+  return readTable_(s, QHEAD, n).map(function (r, i) {
     var f = Object.prototype.toString.call(r[1]) === '[object Date]' ? r[1].getTime() : 0;
     return { row: i + 2, id: String(r[0]), fecha: f, fechaTxt: fmtDate_(r[1]), arbol: String(r[2]), nombre: clean_(r[3], 60), correo: normMail_(r[4]),
       loQueImporta: cleanLoQueImporta_(r[5]), mensaje: clean_(r[6], 400), estado: legado_(clean_(r[7])), lugar: String(r[8] || ''), asignado: String(r[9] || ''), clave: String(r[10] || '') };
@@ -906,7 +976,7 @@ function libresDe_(people, tree) {
 }
 function setPedido_(q, cambios) {
   var s = sheetSum_(), cols = { estado: 8, lugar: 9, asignado: 10, clave: 11, cierre: 12 };
-  Object.keys(cambios).forEach(function (k) { s.getRange(q.row, cols[k]).setValue(cambios[k]); });
+  Object.keys(cambios).forEach(function (k) { s.getRange(q.row, physCol_(s, QHEAD, cols[k])).setValue(cambios[k]); });
 }
 function avisoPedido_(q) {
   var all = readAll_(), tree = treeById_(readTrees_(), q.arbol), people = peopleOf_(all, q.arbol);
@@ -942,7 +1012,7 @@ function pedirSumarme(token, arbol, nombre, correo, loQueImporta, mensaje) {
     if (!act && cache.get('ped_' + correo)) fail_('Ya mandamos un correo de confirmación hace poco. Puede estar en la carpeta de spam.');
     var q = { id: newToken_().slice(0, 12), arbol: arbol, nombre: nombre, correo: correo, loQueImporta: loQueImporta, mensaje: mensaje, clave: act ? '' : newToken_() };
     var s = sheetSum_(), row = Math.max(s.getLastRow(), 1) + 1;
-    s.getRange(row, 1, 1, QCOLS).setValues([[q.id, new Date(), arbol, nombre, correo, loQueImporta, mensaje, act ? 'Pendiente' : 'Sin confirmar', '', '', q.clave, '']]);
+    putRow_(s, QHEAD, row, [q.id, new Date(), arbol, nombre, correo, loQueImporta, mensaje, act ? 'Pendiente' : 'Sin confirmar', '', '', q.clave, '']);
     if (!act) cache.put('ped_' + correo, '1', 120);
     q.tree = tree; q.people = people;
     return q;
@@ -1039,7 +1109,7 @@ function cambiarPerfil(token, nombre, loQueImporta, ubic) {
   var ub = ubicDeFila_(cleanUbic_(ubic, true));
   return withLock_(function () {
     var yo = requireYo_(readAll_(), token);
-    yo.rows.forEach(function (r) { if (r.estado !== 'Aceptada') return; sheet_().getRange(r.row, 3).setValue(nombre); sheet_().getRange(r.row, 9).setValue(loQueImporta); escribirUbic_(r.row, ub); });
+    yo.rows.forEach(function (r) { if (r.estado !== 'Aceptada') return; sheet_().getRange(r.row, physCol_(sheet_(), HEAD, 3)).setValue(nombre); sheet_().getRange(r.row, physCol_(sheet_(), HEAD, 9)).setValue(loQueImporta); escribirUbic_(r.row, ub); });
     return true;
   });
 }
@@ -1094,16 +1164,16 @@ function ubicDeFila_(u) {
 }
 function escribirUbic_(row, ub) {
   if (!ub) return;
-  sheet_().getRange(row, 11, 1, 3).setValues([[ub.ciudad || '', ub.lugar || '', ub.punto || '']]);
+  putCells_(sheet_(), HEAD, row, 11, [ub.ciudad || '', ub.lugar || '', ub.punto || '']);
 }
 function quitarVacante_(arbol, pos) {
   var t = treeById_(readTrees_(), arbol);
   if (!t || (t.vacantes || []).indexOf(pos) < 0) return;
-  sheetArb_().getRange(t.row, 12).setValue(t.vacantes.filter(function (x) { return x !== pos; }).join(','));
+  sheetArb_().getRange(t.row, physCol_(sheetArb_(), AHEAD, 12)).setValue(t.vacantes.filter(function (x) { return x !== pos; }).join(','));
 }
 function agregarVacante_(tree, pos) {
   var v = (tree.vacantes || []).slice(); if (v.indexOf(pos) < 0) v.push(pos);
-  sheetArb_().getRange(tree.row, 12).setValue(v.join(','));
+  sheetArb_().getRange(tree.row, physCol_(sheetArb_(), AHEAD, 12)).setValue(v.join(','));
   tree.vacantes = v;
 }
 
@@ -1176,7 +1246,7 @@ function solicitarDesdeVencida(inv, nombre, loQueImporta, mensaje) {
     var directa = !!(convoco && convoco.estado === 'Aceptada' && d.pos && !occupant_(map, d.pos));
     var q = { id: newToken_().slice(0, 12), arbol: info.arbol, nombre: nombre, correo: correo, loQueImporta: loQueImporta, mensaje: mensaje };
     var sh = sheetSum_(), row = Math.max(sh.getLastRow(), 1) + 1;
-    sh.getRange(row, 1, 1, QCOLS).setValues([[q.id, new Date(), info.arbol, nombre, correo, loQueImporta, mensaje, directa ? 'Asignada' : 'Pendiente', directa ? d.pos : '', directa ? d.invito : '', '', '']]);
+    putRow_(sh, QHEAD, row, [q.id, new Date(), info.arbol, nombre, correo, loQueImporta, mensaje, directa ? 'Asignada' : 'Pendiente', directa ? d.pos : '', directa ? d.invito : '', '', '']);
     return { q: q, directa: directa, convoco: convoco, pos: d.pos, de: d.de, tree: tree, people: people };
   });
   try {
@@ -1200,7 +1270,7 @@ function cambiarNombre(token, arbol, pos, nombre) {
     var target = peopleOf_(all, String(arbol || '')).filter(function (p) { return p.pos === String(pos) && p.estado === 'Aceptada'; })[0];
     if (!target) fail_('No encontramos a esa persona.');
     if (target.correo !== yo.correo && !yo.admin) fail_('Solo podés cambiar tu propio nombre.');
-    rowsOf_(all, target.correo).forEach(function (r) { if (r.estado === 'Aceptada') sheet_().getRange(r.row, 3).setValue(nombre); });
+    rowsOf_(all, target.correo).forEach(function (r) { if (r.estado === 'Aceptada') sheet_().getRange(r.row, physCol_(sheet_(), HEAD, 3)).setValue(nombre); });
     return true;
   });
 }
@@ -1227,8 +1297,8 @@ function sacarDelArbol_(all, trees, arbol, target) {
     // Antes de acordar el tema: el acuerdo de quien se va se borra; su propuesta, si la hizo ella, también.
     if (!tree.acordado && SEMILLA.indexOf(pos) >= 0) {
       var a = sheetArb_();
-      if (tree.prop && tree.prop.de === pos) { a.getRange(tree.row, 7, 1, 3).setValues([['', '', '']]); a.getRange(tree.row, 10).setValue(''); }
-      else a.getRange(tree.row, 10).setValue(tree.acuerdos.filter(function (x) { return x !== pos; }).join(','));
+      if (tree.prop && tree.prop.de === pos) { putCells_(a, AHEAD, tree.row, 7, ['', '', '']); a.getRange(tree.row, physCol_(a, AHEAD, 10)).setValue(''); }
+      else a.getRange(tree.row, physCol_(a, AHEAD, 10)).setValue(tree.acuerdos.filter(function (x) { return x !== pos; }).join(','));
     }
   }
   // Las solicitudes que le habían asignado vuelven a quien coordina.
@@ -1315,7 +1385,7 @@ function procesarVencimientos_() {
     });
     if (!recordar.length && !vencer.length) return null;
     var trees = readTrees_();
-    recordar.forEach(function (p) { sheet_().getRange(p.row, 14).setValue(new Date(ahora)); p.rec = ahora; });
+    recordar.forEach(function (p) { sheet_().getRange(p.row, physCol_(sheet_(), HEAD, 14)).setValue(new Date(ahora)); p.rec = ahora; });
     // Se arman los avisos antes de borrar, con los datos de la fila y del árbol.
     function datos(p) {
       var gente = peopleOf_(raw.filter(function (x) { return !x.vencida || x.row === p.row; }), p.arbol), tree = treeById_(trees, p.arbol);
@@ -1400,19 +1470,19 @@ function migrarConvocadas_() {
     if (s) {
       var n = s.getLastRow() - 1;
       if (n > 0) {
-        var col = s.getRange(2, 6, n, 1), vals = col.getValues();
+        var col = s.getRange(2, physCol_(s, HEAD, 6), n, 1), vals = col.getValues();
         if (vals.some(function (r) { return r[0] !== legado_(r[0]); })) col.setValues(vals.map(function (r) { return [legado_(r[0])]; }));
       }
-      s.getRange(1, 5).setValue(HEAD[4]);
-      s.getRange(1, 7).setValue(HEAD[6]);
+      s.getRange(1, physCol_(s, HEAD, 5)).setValue(HEAD[4]);
+      s.getRange(1, physCol_(s, HEAD, 7)).setValue(HEAD[6]);
     }
     var a = sheetArb_();
-    if (a) { a.getRange(1, 2).setValue(AHEAD[1]); a.getRange(1, 7).setValue(AHEAD[6]); }
+    if (a) { a.getRange(1, physCol_(a, AHEAD, 2)).setValue(AHEAD[1]); a.getRange(1, physCol_(a, AHEAD, 7)).setValue(AHEAD[6]); }
     var q = SpreadsheetApp.getActive().getSheetByName(SHEET_SUM);
     if (q) {
       var m = q.getLastRow() - 1;
       if (m > 0) {
-        var cq = q.getRange(2, 8, m, 1), vq = cq.getValues();
+        var cq = q.getRange(2, physCol_(q, QHEAD, 8), m, 1), vq = cq.getValues();
         if (vq.some(function (r) { return r[0] !== legado_(r[0]); })) cq.setValues(vq.map(function (r) { return [legado_(r[0])]; }));
       }
     }
@@ -1428,7 +1498,7 @@ function ordenarPlanilla() {
   migrarConvocadas_();
   var ss = SpreadsheetApp.getActive();
   ['Propuesta', 'Árbol', 'Decisiones', 'Apoyos', 'RCE'].forEach(function (n) { var sh = ss.getSheetByName(n); if (sh) ss.deleteSheet(sh); });
-  headerStyle_(sheetArb_().getRange(1, 1, 1, ACOLS).setValues([AHEAD]));
+  AHEAD.forEach(function (h, i) { headerStyle_(sheetArb_().getRange(1, physCol_(sheetArb_(), AHEAD, i + 1)).setValue(h)); });
   sheetSum_();
   var g = ss.getSheetByName('Cómo se juega') || ss.insertSheet('Cómo se juega');
   g.clear(); g.getRange('A:B').breakApart();
@@ -1461,7 +1531,7 @@ function ordenarPlanilla() {
     ['Alcance de entrada', 'En qué alcance entró la persona (cuántos números tiene su posición).'],
     ['Nombre', 'Cómo la ve el resto.'],
     ['Correo', 'Con el que entra. No se muestra en la app.'],
-    ['Convocó (posición)', 'Posición de quien la convocó, en el mismo árbol.'],
+    ['Convocada por (posición)', 'Posición de quien la convocó, en el mismo árbol.'],
     ['Estado', 'Convocada (todavía no aceptó) o Aceptada.'],
     ['Fecha de convocatoria / de entrada', 'Cuándo la convocaron y cuándo entró.'],
     ['Lo que importa', 'Lo que la persona escribió al entrar o en Mi perfil.'],
