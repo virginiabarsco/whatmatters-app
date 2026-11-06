@@ -187,11 +187,11 @@ Cuidados: si la pestaña del editor deja de responder a las capturas, cerrarla y
 - `logo/` — programas del logo.
 
 
-## Planilla: columnas (decidido el 6 nov, implementado en local, sin publicar)
+## Planilla: columnas (decidido y publicado el 6 nov: versión 56 en prueba y en principal)
 - Personas: **Árbol** va antes de **Posición**; "Convocó (posición)" pasa a **Convocada por (posición)**.
 - Quieren sumarse: "Lugar" pasa a **Posición elegida**; "Asignado a (posición)" pasa a **Decide (posición)**; **Id** y **Clave** se ocultan (la app las sigue usando).
 - Árboles: "Posiciones por convocar por salida" pasa a **Por convocar por salida**.
 - La app lee y escribe cada columna **por el nombre de su cabecera** (`colsOf_`, `readTable_`, `putRow_`, `putCells_`), así que las columnas se pueden reordenar a mano sin tocar el código; reconoce también los nombres viejos (`COL_ALT`).
-- Migración automática y repetible (`migrarColumnas_`, bandera `setup_columnas_v1`): corre en el primer arranque con el código nuevo. **Publicar en prueba y principal al mismo tiempo**: la principal en la v55 lee las columnas por posición y mostraría datos mal.
+- Migración automática y repetible (`migrarColumnas_`, bandera `setup_columnas_v1`): corrió en el primer arranque con el código nuevo (v56, 6 nov). Se publicó en prueba y principal seguidas. Copia de seguridad previa en Drive: "WhatMatters planilla — copia antes de columnas por nombre (6 nov 2026)".
 - Pendiente: la hoja "Cómo se juega" todavía describe las columnas con el orden y los nombres viejos (solo se cambió el rótulo de Convocada por); se reescribe con la revisión de Opus.
 - Pruebas: `test/regresion-columnas.js`.
