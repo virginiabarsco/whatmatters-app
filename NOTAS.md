@@ -1,6 +1,6 @@
 # WhatMatters · nota de traspaso
 
-Para retomar el trabajo en una conversación nueva. Última actualización: 18 de noviembre de 2026 (**bloque Sierpinski acordado, sin implementar**: ver la sección siguiente). Lo que está publicado hoy es la versión 56 (ver el registro de cambios del repositorio); algunas secciones de más abajo describen estados anteriores.
+Para retomar el trabajo en una conversación nueva. Última actualización: 18 de noviembre de 2026 (**bloque Sierpinski listo para la prueba, sin publicar todavía**: ver la sección siguiente). Lo que está publicado hoy es la versión 56 (ver el registro de cambios del repositorio); algunas secciones de más abajo describen estados anteriores.
 
 ## Cómo trabajamos
 
@@ -17,11 +17,25 @@ Para retomar el trabajo en una conversación nueva. Última actualización: 18 d
 - Modelos: decidir reglas y diseño → Opus, esfuerzo alto. Aplicar cambios acordados y probar → Sonnet, medio. Publicar → Sonnet, bajo o medio. Abrir una conversación nueva por bloque.
 
 
-## Bloque Sierpinski · el árbol como el logo (acordado el 18 nov 2026, sin implementar; implementar con Sonnet, esfuerzo medio)
+## Bloque Sierpinski · el árbol como el logo (acordado el 18 nov 2026; implementado y revisado por Virginia en la simulación con datos reales el 18 nov; listo para pasar a la prueba como versión 57)
 
 Decidido con Opus el 18 nov. Los acuerdos de fondo (una sola estructura, el fruto, la RCE, la materialización) están en el doc "WhatMatters: el árbol, el bosque y cómo se decide" (https://claude.ai/artifact/M23v9skuGWTJodWadzrLT1), sección "Acuerdos del 18 de noviembre de 2026". Este bloque solo cambia **cómo se dibuja el árbol** en la app; las reglas, las posiciones y la planilla no cambian.
 
 **Revisión:** Virginia prefiere revisar en la **implementación de prueba con sus datos reales**, no en simulaciones con árboles o nombres inventados. Probar en la copia local con el simulador (regresión sin errores) y **publicar en la prueba solo cuando ella lo diga**. Mostrarle antes la lista de cambios.
+
+**Estado:** implementado en `app/Index.html` (solo la copia local; la planilla, `Code.gs` y las reglas no cambian). Probado con `test/regresion-sierpinski.js` (nuevo: numeración en sentido horario, 3^N personas y (3^N−1)/2 uniones, toque, Acercar, "A1 de N") y las tres regresiones anteriores, todas sin errores. Falta que Virginia lo revise en la prueba con sus datos reales; publicar solo cuando lo pida. Detalles de la implementación:
+- **Profundidad (decidido el 18 nov al revisar, reemplaza el punto 4):** se dibuja hasta el alcance N, el mismo de "A1 de N" (el más alto con alguien Aceptado). Al "Acercar" una región se ve un alcance más (por ejemplo la tríada del alcance siguiente con sus "+"). Las regiones con alguien Convocado más allá de N se subdividen hasta esa posición (el dibujo queda desparejo, pero se ve dónde algo está creciendo). Tus triángulos con posiciones por convocar escondidas llevan un "+" chico en la esquina; tocarlos acerca a esa región.
+- Las posiciones de alcances anteriores de una persona (la misma persona, una dentro de otra) se ven al tocarla o en las tuyas, como bordes cian anidados.
+- Nombres: se prueba el nombre completo y, si no entra, el primer nombre.
+- Textos (18 nov): "Al tocar a una persona se muestran sus posiciones. Al tocar una unión se muestra quiénes la forman." y en la leyenda "El tamaño muestra el alcance. El color muestra el estado de cada posición:" con las cuatro muestras en un renglón (en celular no entran a 14 px: van en dos renglones de dos). Leyenda y ficha del árbol a 14 px. En la Lista, "+ Convocar" en cian.
+- Ficha de la persona: se sacaron las etiquetas de tríadas con borde ("Tríada base del tronco · A1", "Tríada 1 · A2"…). La leyenda (y las demás leyendas) pasa de 12 a 13 px.
+- **Fondos (decidido el 18 nov):** la vista Árbol va **sin mapa** (recuadro liso, del color de las tarjetas; se sacó el `<use href="#mvdCiudad">` que se movía con el zoom). El fondo de la página queda **solo con el mapa de Montevideo**: se sacaron los moños (`mapa/fondo_sierpinski.py sin`; sin "sin" pone cinco Sierpinskis decorativos, que se probaron y se descartaron). Más adelante: de fondo, el mapa de la zona que cada persona quiera, tipo Google Earth, y la vista Mapa (Árbol, Lista, Mapa) con los puntos de cada persona unidos por tríadas.
+- **Modo claro más cálido (decidido el 18 nov):** el árbol elegido en "Tus árboles" con fondo naranja suave y borde naranja; etiqueta "Árbol" naranja, "Semilla" naranja claro; línea del árbol elegido en naranja; mapa de fondo en crema y turquesa. Solo en modo claro (clase `claro` en `<html>`, que pone `aplicarModo`). Se probó y se descartó un Sierpinski chico en cada tarjeta. Naranja del modo claro: `--sap: #EE8400`, el mismo del logo (antes `#C96A00`); la etiqueta "Árbol" lleva letra oscura (`--on-tag`).
+- **Orden de la pantalla (decidido el 18 nov):** Mi perfil (si está abierto) → Tus árboles (hasta tres) → **Más árboles de la red** (desplegable solo con los árboles que no son de la persona; quien no entró sigue viendo "Árboles de la red" con todos) → el árbol elegido: su tema como título (y "No estás en este árbol" si corresponde), las cifras, Quiero sumarme, acordar el tema, solicitudes, Árbol o Lista e Irme de este árbol. Al elegir un árbol de cualquiera de las dos listas, el desplegable se cierra y la pantalla baja hasta el árbol elegido.
+- Las uniones no llevan relleno: dejan ver el fondo de Montevideo (que se queda por ahora) y llevan borde fino solo cuando la tríada está completa.
+- Se agregó el token `--on-sap` (texto sobre el naranja, claro y oscuro) para que las letras tengan contraste sobre las posiciones Aceptadas.
+- Textos cambiados: pestaña "Árbol", "Ver en el árbol" (Lista), el desplegable de árboles y la ficha; la leyenda nueva conserva "+ Podés convocar" cuando hay posiciones para convocar.
+- Página de revisión con los datos reales (sin correos, no está en el repositorio porque tiene nombres): https://claude.ai/artifact/G2uJYVx8oUVrDjLkSc8UVJ
 
 Lista de cambios acordada:
 
