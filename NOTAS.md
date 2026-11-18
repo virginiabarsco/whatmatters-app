@@ -1,6 +1,6 @@
 # WhatMatters · nota de traspaso
 
-Para retomar el trabajo en una conversación nueva. Última actualización: 4 de noviembre de 2026 (bloques 1, 1b y 1c publicados, versión 50; **bloque 2 en discusión**).
+Para retomar el trabajo en una conversación nueva. Última actualización: 18 de noviembre de 2026 (**bloque Sierpinski acordado, sin implementar**: ver la sección siguiente). Lo que está publicado hoy es la versión 56 (ver el registro de cambios del repositorio); algunas secciones de más abajo describen estados anteriores.
 
 ## Cómo trabajamos
 
@@ -15,6 +15,51 @@ Para retomar el trabajo en una conversación nueva. Última actualización: 4 de
 - **Revisión antes de subir (decidido el 4 nov):** la copia local (test/harness.html, código real + simulador de Google) se publica como página privada y Virginia la recorre en compu y celular. Lleva un panel que muestra los correos simulados y un botón que arma un árbol de ejemplo desparejo (ramas hasta A5 y otras en A2). Capturas solo si ella pide que Claude mire algo.
 - Textos de la app sin imperativos. Terminar las respuestas con el enlace relevante.
 - Modelos: decidir reglas y diseño → Opus, esfuerzo alto. Aplicar cambios acordados y probar → Sonnet, medio. Publicar → Sonnet, bajo o medio. Abrir una conversación nueva por bloque.
+
+
+## Bloque Sierpinski · el árbol como el logo (acordado el 18 nov 2026, sin implementar; implementar con Sonnet, esfuerzo medio)
+
+Decidido con Opus el 18 nov. Los acuerdos de fondo (una sola estructura, el fruto, la RCE, la materialización) están en el doc "WhatMatters: el árbol, el bosque y cómo se decide" (https://claude.ai/artifact/M23v9skuGWTJodWadzrLT1), sección "Acuerdos del 18 de noviembre de 2026". Este bloque solo cambia **cómo se dibuja el árbol** en la app; las reglas, las posiciones y la planilla no cambian.
+
+**Revisión:** Virginia prefiere revisar en la **implementación de prueba con sus datos reales**, no en simulaciones con árboles o nombres inventados. Probar en la copia local con el simulador (regresión sin errores) y **publicar en la prueba solo cuando ella lo diga**. Mostrarle antes la lista de cambios.
+
+Lista de cambios acordada:
+
+1. **La pestaña "Mapa" pasa a llamarse "Árbol"** y dibuja el triángulo de Sierpinski **como el símbolo de play** (apunta a la derecha), igual que el logo. Es la vista del árbol desde el cielo. Quedan dos vistas: Árbol y Lista. **El fondo de Montevideo se queda por ahora** (se revisa después).
+2. **Las personas son los triángulos que apuntan como el play; las uniones (tríadas) son los que apuntan al revés.** Cada alcance subdivide el triángulo de cada posición en tres (la misma persona y las dos que convoca) con la unión en el medio. El árbol ocupa siempre el mismo triángulo: crecer es llenarlo de detalle. Ejemplo: alcance 2 = 9 personas y 4 uniones.
+3. **Numeración:** la semilla va 1 arriba a la izquierda, 2 en la punta, 3 abajo (sentido horario). En cada tríada, la persona que sigue (p.1) queda en la misma esquina de la región, y p.2 y p.3 ocupan las otras dos esquinas **en sentido horario** a partir de ella. Imagen de referencia: `mapa/sierpinski-referencia.png` (alcances 1, 2 y 3).
+4. **Profundidad:** se dibuja hasta el alcance más alto que esté abierto (con el freno del tema y el límite de tres alcances). Las posiciones Por convocar se dibujan como triángulos vacíos.
+   - **Para revisar al probar:** con el árbol t1 (alcance 2 completo, alcance 3 vacío) esto achica a las 9 personas para dibujar las 18 posiciones vacías, y los nombres dejan de entrar. Si se lee peor, la alternativa es dibujar hasta el alcance más alto con gente y mostrar el siguiente al tocar el propio triángulo. Lo decide Virginia al revisar.
+5. **Colores** (usar los tokens que ya existen, en modo claro y oscuro):
+   - Personas, un solo color: naranja `--sap`, con tres intensidades por estado: **Aceptada** relleno pleno; **Convocada** relleno suave y borde punteado; **Por convocar** solo borde tenue, sin relleno.
+   - Uniones: del color del fondo (son los huecos, como en el logo), con un borde fino cuando su tríada está completa (las tres posiciones Aceptadas).
+   - Cian `--accent`: borde en **tus posiciones** (siempre se ve dónde estás) y en las posiciones de la persona que se toca.
+   - El color **ya no muestra el alcance** (lo muestra el tamaño): la paleta de 10 colores por alcance deja de usarse en el árbol.
+   - Materialización (más adelante): un segundo color, solo en el anillo de afuera.
+6. **La unión central dice "A1 de N · X personas"**, con N = el alcance más alto con al menos una persona Aceptada. Las demás uniones muestran "A2", "A3"… mientras el texto entra. Al acercarse a una persona, la unión central de esa vista dice por ejemplo "A2 de 4".
+7. **Etiquetas según el tamaño:** posición y nombre; después solo la posición; después nada. Como referencia, en un celular (triángulo de unos 340 px) cada persona mide 170 px en el alcance 1, 85 en el 2, 42 en el 3, 21 en el 4.
+8. **Tocar:** al tocar a una persona se encienden en cian todas sus posiciones (la misma persona en cada alcance), aparece su tarjeta y un botón **"Acercar"** que lleva a lo que creció desde ella (su región, que es otro Sierpinski con un alcance menos). "Todo" vuelve al árbol entero. Al tocar una unión se ve quiénes la forman. Convocar sigue igual: en tus posiciones Por convocar hay un "+" para convocar.
+9. **Leyenda:** "El tamaño muestra el alcance y el color, el estado de cada posición." con las muestras Aceptada, Convocada, Por convocar y Tus posiciones. Reemplaza "El color muestra el alcance y el borde muestra el estado de la posición".
+10. **La Lista no cambia.**
+
+Geometría (reemplaza `mgroup`/`mpoint`/`OFF` del moño en `app/Index.html`):
+
+```js
+// Triángulo exterior como play (y hacia abajo): esquinas 0 = arriba izq, 1 = punta, 2 = abajo izq.
+var h = s * Math.sqrt(3) / 2, T = [[0, 0], [h, s / 2], [0, s]];
+function mid(a, b) { return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]; }
+function horario(a, b, c) { return (b[0]-a[0])*(c[1]-a[1]) - (b[1]-a[1])*(c[0]-a[0]) > 0; } // y hacia abajo
+// region(slot): triángulo de una posición; k = esquina donde sigue esa persona.
+// Semilla: la posición i (1, 2, 3) es la esquina i-1 de T, con k = i-1.
+// Subdividir la región P (esquinas P0, P1, P2) de la posición `slot` con persona en la esquina k:
+//   sub[i] = [P[i], mid(P[i], P[(i+1)%3]), mid(P[i], P[(i+2)%3])]  reordenado para que sub[i][i] = P[i]
+//   unión = [mid(P0,P1), mid(P1,P2), mid(P0,P2)]   (rótulo "A" + alcance de la subdivisión)
+//   slot+'.1' -> sub[k] (misma persona, misma esquina k)
+//   slot+'.2', slot+'.3' -> las otras dos esquinas, en el orden en que (P[k], P[a], P[b]) es horario
+// La persona de una posición es pidOfSlot(slot) (sin los .1 del final), como hoy.
+```
+
+Una versión en Python que dibuja la imagen de referencia está en la conversación de diseño del 18 nov; la regla de arriba alcanza para reproducirla.
 
 ## Enlaces
 
